@@ -50,56 +50,6 @@
   <VERTEX id="48" type="47"><COORDINATE>47</COORDINATE></VERTEX>
   <VERTEX id="49" type="48"><COORDINATE>48</COORDINATE></VERTEX>
   <VERTEX id="50" type="49"><COORDINATE>49</COORDINATE></VERTEX>
-  <VERTEX id="51" type="50"><COORDINATE>50</COORDINATE></VERTEX>
-  <VERTEX id="52" type="51"><COORDINATE>51</COORDINATE></VERTEX>
-  <VERTEX id="53" type="52"><COORDINATE>52</COORDINATE></VERTEX>
-  <VERTEX id="54" type="53"><COORDINATE>53</COORDINATE></VERTEX>
-  <VERTEX id="55" type="54"><COORDINATE>54</COORDINATE></VERTEX>
-  <VERTEX id="56" type="55"><COORDINATE>55</COORDINATE></VERTEX>
-  <VERTEX id="57" type="56"><COORDINATE>56</COORDINATE></VERTEX>
-  <VERTEX id="58" type="57"><COORDINATE>57</COORDINATE></VERTEX>
-  <VERTEX id="59" type="58"><COORDINATE>58</COORDINATE></VERTEX>
-  <VERTEX id="60" type="59"><COORDINATE>59</COORDINATE></VERTEX>
-  <VERTEX id="61" type="60"><COORDINATE>60</COORDINATE></VERTEX>
-  <VERTEX id="62" type="61"><COORDINATE>61</COORDINATE></VERTEX>
-  <VERTEX id="63" type="62"><COORDINATE>62</COORDINATE></VERTEX>
-  <VERTEX id="64" type="63"><COORDINATE>63</COORDINATE></VERTEX>
-  <VERTEX id="65" type="64"><COORDINATE>64</COORDINATE></VERTEX>
-  <VERTEX id="66" type="65"><COORDINATE>65</COORDINATE></VERTEX>
-  <VERTEX id="67" type="66"><COORDINATE>66</COORDINATE></VERTEX>
-  <VERTEX id="68" type="67"><COORDINATE>67</COORDINATE></VERTEX>
-  <VERTEX id="69" type="68"><COORDINATE>68</COORDINATE></VERTEX>
-  <VERTEX id="70" type="69"><COORDINATE>69</COORDINATE></VERTEX>
-  <VERTEX id="71" type="70"><COORDINATE>70</COORDINATE></VERTEX>
-  <VERTEX id="72" type="71"><COORDINATE>71</COORDINATE></VERTEX>
-  <VERTEX id="73" type="72"><COORDINATE>72</COORDINATE></VERTEX>
-  <VERTEX id="74" type="73"><COORDINATE>73</COORDINATE></VERTEX>
-  <VERTEX id="75" type="74"><COORDINATE>74</COORDINATE></VERTEX>
-  <VERTEX id="76" type="75"><COORDINATE>75</COORDINATE></VERTEX>
-  <VERTEX id="77" type="76"><COORDINATE>76</COORDINATE></VERTEX>
-  <VERTEX id="78" type="77"><COORDINATE>77</COORDINATE></VERTEX>
-  <VERTEX id="79" type="78"><COORDINATE>78</COORDINATE></VERTEX>
-  <VERTEX id="80" type="79"><COORDINATE>79</COORDINATE></VERTEX>
-  <VERTEX id="81" type="80"><COORDINATE>80</COORDINATE></VERTEX>
-  <VERTEX id="82" type="81"><COORDINATE>81</COORDINATE></VERTEX>
-  <VERTEX id="83" type="82"><COORDINATE>82</COORDINATE></VERTEX>
-  <VERTEX id="84" type="83"><COORDINATE>83</COORDINATE></VERTEX>
-  <VERTEX id="85" type="84"><COORDINATE>84</COORDINATE></VERTEX>
-  <VERTEX id="86" type="85"><COORDINATE>85</COORDINATE></VERTEX>
-  <VERTEX id="87" type="86"><COORDINATE>86</COORDINATE></VERTEX>
-  <VERTEX id="88" type="87"><COORDINATE>87</COORDINATE></VERTEX>
-  <VERTEX id="89" type="88"><COORDINATE>88</COORDINATE></VERTEX>
-  <VERTEX id="90" type="89"><COORDINATE>89</COORDINATE></VERTEX>
-  <VERTEX id="91" type="90"><COORDINATE>90</COORDINATE></VERTEX>
-  <VERTEX id="92" type="91"><COORDINATE>91</COORDINATE></VERTEX>
-  <VERTEX id="93" type="92"><COORDINATE>92</COORDINATE></VERTEX>
-  <VERTEX id="94" type="93"><COORDINATE>93</COORDINATE></VERTEX>
-  <VERTEX id="95" type="94"><COORDINATE>94</COORDINATE></VERTEX>
-  <VERTEX id="96" type="95"><COORDINATE>95</COORDINATE></VERTEX>
-  <VERTEX id="97" type="96"><COORDINATE>96</COORDINATE></VERTEX>
-  <VERTEX id="98" type="97"><COORDINATE>97</COORDINATE></VERTEX>
-  <VERTEX id="99" type="98"><COORDINATE>98</COORDINATE></VERTEX>
-  <VERTEX id="100" type="99"><COORDINATE>99</COORDINATE></VERTEX>
   <EDGE source="1" target="2" id="1" type="0" vector="1"/>
   <EDGE source="2" target="3" id="2" type="1" vector="1"/>
   <EDGE source="3" target="4" id="3" type="2" vector="1"/>
@@ -149,55 +99,5 @@
   <EDGE source="47" target="48" id="47" type="46" vector="1"/>
   <EDGE source="48" target="49" id="48" type="47" vector="1"/>
   <EDGE source="49" target="50" id="49" type="48" vector="1"/>
-  <EDGE source="50" target="51" id="50" type="49" vector="1"/>
-  <EDGE source="51" target="52" id="51" type="50" vector="1"/>
-  <EDGE source="52" target="53" id="52" type="51" vector="1"/>
-  <EDGE source="53" target="54" id="53" type="52" vector="1"/>
-  <EDGE source="54" target="55" id="54" type="53" vector="1"/>
-  <EDGE source="55" target="56" id="55" type="54" vector="1"/>
-  <EDGE source="56" target="57" id="56" type="55" vector="1"/>
-  <EDGE source="57" target="58" id="57" type="56" vector="1"/>
-  <EDGE source="58" target="59" id="58" type="57" vector="1"/>
-  <EDGE source="59" target="60" id="59" type="58" vector="1"/>
-  <EDGE source="60" target="61" id="60" type="59" vector="1"/>
-  <EDGE source="61" target="62" id="61" type="60" vector="1"/>
-  <EDGE source="62" target="63" id="62" type="61" vector="1"/>
-  <EDGE source="63" target="64" id="63" type="62" vector="1"/>
-  <EDGE source="64" target="65" id="64" type="63" vector="1"/>
-  <EDGE source="65" target="66" id="65" type="64" vector="1"/>
-  <EDGE source="66" target="67" id="66" type="65" vector="1"/>
-  <EDGE source="67" target="68" id="67" type="66" vector="1"/>
-  <EDGE source="68" target="69" id="68" type="67" vector="1"/>
-  <EDGE source="69" target="70" id="69" type="68" vector="1"/>
-  <EDGE source="70" target="71" id="70" type="69" vector="1"/>
-  <EDGE source="71" target="72" id="71" type="70" vector="1"/>
-  <EDGE source="72" target="73" id="72" type="71" vector="1"/>
-  <EDGE source="73" target="74" id="73" type="72" vector="1"/>
-  <EDGE source="74" target="75" id="74" type="73" vector="1"/>
-  <EDGE source="75" target="76" id="75" type="74" vector="1"/>
-  <EDGE source="76" target="77" id="76" type="75" vector="1"/>
-  <EDGE source="77" target="78" id="77" type="76" vector="1"/>
-  <EDGE source="78" target="79" id="78" type="77" vector="1"/>
-  <EDGE source="79" target="80" id="79" type="78" vector="1"/>
-  <EDGE source="80" target="81" id="80" type="79" vector="1"/>
-  <EDGE source="81" target="82" id="81" type="80" vector="1"/>
-  <EDGE source="82" target="83" id="82" type="81" vector="1"/>
-  <EDGE source="83" target="84" id="83" type="82" vector="1"/>
-  <EDGE source="84" target="85" id="84" type="83" vector="1"/>
-  <EDGE source="85" target="86" id="85" type="84" vector="1"/>
-  <EDGE source="86" target="87" id="86" type="85" vector="1"/>
-  <EDGE source="87" target="88" id="87" type="86" vector="1"/>
-  <EDGE source="88" target="89" id="88" type="87" vector="1"/>
-  <EDGE source="89" target="90" id="89" type="88" vector="1"/>
-  <EDGE source="90" target="91" id="90" type="89" vector="1"/>
-  <EDGE source="91" target="92" id="91" type="90" vector="1"/>
-  <EDGE source="92" target="93" id="92" type="91" vector="1"/>
-  <EDGE source="93" target="94" id="93" type="92" vector="1"/>
-  <EDGE source="94" target="95" id="94" type="93" vector="1"/>
-  <EDGE source="95" target="96" id="95" type="94" vector="1"/>
-  <EDGE source="96" target="97" id="96" type="95" vector="1"/>
-  <EDGE source="97" target="98" id="97" type="96" vector="1"/>
-  <EDGE source="98" target="99" id="98" type="97" vector="1"/>
-  <EDGE source="99" target="100" id="99" type="98" vector="1"/>
  </GRAPH>
 </LATTICES>
