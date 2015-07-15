@@ -4,6 +4,7 @@ import pyalps
 import numpy as np
 from collections import OrderedDict
 import time
+from copy import deepcopy
 
 basename = 'Tasks/bh'+str(time.time())
 
@@ -33,20 +34,23 @@ basename = 'Tasks/bh'+str(time.time())
 #         'MAXSTATES'                 : 200
 #        } ]
 
-L = 100
+L = 50
 
 parms = OrderedDict()
 parms['LATTICE_LIBRARY'] = 'lattice.xml'
 parms['LATTICE'] = 'inhomogeneous open chain lattice'
 # parms['LATTICE'] = 'open chain lattice'
+parms['MODEL_LIBRARY'] = 'model.xml'
 parms['MODEL'] = 'boson Hubbard'
 parms['L'] = L
 parms['CONSERVED_QUANTUMNUMBERS'] = 'N'
 parms['Nmax'] = 5
-parms['SWEEPS'] = 50
+parms['SWEEPS'] = 100
 parms['NUMBER_EIGENVALUES'] = 1
 parms['MAXSTATES'] = 200
 parms['MEASURE_LOCAL[Local density]'] = 'n'
+parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
+parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
 
 np.random.seed(0)
 t = (1 + 0.5 * np.random.uniform(-1, 1, L-1)) * 0.01 #[0.01, 0.02, 0.03, 0.02]
@@ -58,13 +62,30 @@ for i in range(L-1):
 for i in range(L):
     parms['U'+str(i)] = U[i]
 
-parms['N_total'] = L
+parms['N_total'] = 1
+
+basename = 'Tasks/bh0'
+
+parmslist = []
+for N in range(0, L+1):
+    parmsi = deepcopy(parms)
+    parmsi['N_total'] = N
+    parmslist.append(parmsi)
+
 
 #write the input file and run the simulation
-input_file = pyalps.writeInputFiles(basename,[parms])
+input_file = pyalps.writeInputFiles(basename,parmslist)
 res = pyalps.runApplication('mps_optim',input_file,writexml=True)
 
 #load all measurements for all states
 data = pyalps.loadEigenstateMeasurements(pyalps.getResultFiles(prefix=basename))
 
-print(data)
+energies = []
+for d in data:
+    for s in d:
+        if(s.props['observable'] == 'Energy'):
+            energies.append(s.y[0])
+
+energyfile = open('/home/ubuntu/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/energies.txt', 'w')
+energiesstr = '{' + ','.join(["{:.20f}".format(en) for en in energies]) + '}'
+energyfile.write(energiesstr)
