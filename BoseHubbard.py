@@ -39,11 +39,10 @@ for i in range(L):
 
 parms['N_total'] = 1
 
-basename = 'Tasks/bh1'
+basename = 'Tasks/bh2'
 
 parmslist = []
-# for N in range(0, L+1):
-for N in range(5, 8):
+for N in range(0, L+1):
     parmsi = deepcopy(parms)
     parmsi['N_total'] = N
     parmslist.append(parmsi)
