@@ -33,7 +33,7 @@ basename = 'Tasks/bh'+str(time.time())
 #         'MAXSTATES'                 : 200
 #        } ]
 
-L = 50
+L = 100
 
 parms = OrderedDict()
 parms['LATTICE_LIBRARY'] = 'lattice.xml'
@@ -43,7 +43,7 @@ parms['MODEL'] = 'boson Hubbard'
 parms['L'] = L
 parms['CONSERVED_QUANTUMNUMBERS'] = 'N'
 parms['Nmax'] = 5
-parms['SWEEPS'] = 80
+parms['SWEEPS'] = 50
 parms['NUMBER_EIGENVALUES'] = 1
 parms['MAXSTATES'] = 200
 parms['MEASURE_LOCAL[Local density]'] = 'n'
