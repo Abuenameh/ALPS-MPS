@@ -8,34 +8,9 @@ from copy import deepcopy
 
 basename = 'Tasks/bh'+str(time.time())
 
-#prepare the input parameters
-# parms = [ {
-#         'LATTICE_LIBRARY'           : 'lattice.xml',
-#         'LATTICE'                   : 'inhomogeneous open chain lattice',
-#         # 'LATTICE'                   : 'open chain lattice',
-#         'MODEL'                     : 'boson Hubbard',
-#         'L'                         : 5,
-#         'CONSERVED_QUANTUMNUMBERS'  : 'N',
-#         'N_total'                   : 5,
-#         'Nmax'                      : 5,
-#         # 't'                         : 0.01,
-#         't0'                         : 0.01,
-#         't1'                         : 0.02,
-#         't2'                         : 0.03,
-#         't3'                         : 0.02,
-#         # 'U'                         : 1,
-#         'U0'                         : 1,
-#         'U1'                         : 2,
-#         'U2'                         : 3,
-#         'U3'                         : 1,
-#         'U4'                         : 2,
-#         'SWEEPS'                    : 4,
-#         'NUMBER_EIGENVALUES'        : 1,
-#         'MAXSTATES'                 : 200
-#        } ]
-
 L = 50
 
+#prepare the input parameters
 parms = OrderedDict()
 parms['LATTICE_LIBRARY'] = 'lattice.xml'
 parms['LATTICE'] = 'inhomogeneous open chain lattice'
@@ -64,10 +39,11 @@ for i in range(L):
 
 parms['N_total'] = 1
 
-basename = 'Tasks/bh0'
+basename = 'Tasks/bh1'
 
 parmslist = []
-for N in range(0, L+1):
+# for N in range(0, L+1):
+for N in range(5, 8):
     parmsi = deepcopy(parms)
     parmsi['N_total'] = N
     parmslist.append(parmsi)
@@ -81,8 +57,8 @@ res = pyalps.runApplication('mps_optim',input_file,writexml=True)
 data = pyalps.loadEigenstateMeasurements(pyalps.getResultFiles(prefix=basename))
 
 energies = []
-for d in data:
-    for s in d:
+for i in range(0,len(data)):
+    for s in data[i]:
         if(s.props['observable'] == 'Energy'):
             energies.append(s.y[0])
 
