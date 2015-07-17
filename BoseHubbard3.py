@@ -22,7 +22,7 @@ parms['CONSERVED_QUANTUMNUMBERS'] = 'N'
 parms['Nmax'] = 5
 parms['SWEEPS'] = 200
 parms['NUMBER_EIGENVALUES'] = 1
-parms['MAXSTATES'] = 400
+parms['MAXSTATES'] = 200
 parms['MEASURE_LOCAL[Local density]'] = 'n'
 parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
 parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
@@ -39,10 +39,10 @@ for i in range(L):
 
 parms['N_total'] = 1
 
-# basename = 'Tasks/bh20'
+basename = 'Tasks/bh7'
 
 parmslist = []
-for N in range(60, 61):
+for N in range(40, 50):
     parmsi = deepcopy(parms)
     parmsi['N_total'] = N
     parmslist.append(parmsi)
@@ -53,16 +53,14 @@ input_file = pyalps.writeInputFiles(basename,parmslist)
 res = pyalps.runApplication('mps_optim',input_file,writexml=True)
 
 #load all measurements for all states
-data = pyalps.loadEigenstateMeasurements(pyalps.getResultFiles(prefix=basename))
-
-energies = []
-for i in range(0,len(data)):
-    for s in data[i]:
-        if(s.props['observable'] == 'Energy'):
-            energies.append(s.y[0])
-
-print(energies)
-
-# energyfile = open('/home/ubuntu/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/energies.txt', 'w')
+# data = pyalps.loadEigenstateMeasurements(pyalps.getResultFiles(prefix=basename))
+#
+# energies = []
+# for i in range(0,len(data)):
+#     for s in data[i]:
+#         if(s.props['observable'] == 'Energy'):
+#             energies.append(s.y[0])
+#
+# energyfile = open('/home/ubuntu/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/energies2.txt', 'w')
 # energiesstr = '{' + ','.join(["{:.20f}".format(en) for en in energies]) + '}'
 # energyfile.write(energiesstr)
