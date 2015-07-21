@@ -55,7 +55,7 @@ for i in range(L):
 Usort = sorted([(Ui, i) for (i, Ui) in enumerate(U)])
 
 basename = 'Tasks/bh.50.'+str(seed)
-resi = 0
+resi = 2
 basename = 'Tasks/bh.50.'+str(resi)
 
 parmslist = []
@@ -113,7 +113,8 @@ n2s = [res[1] for res in sorted(n2results)]
 corrs = [res[1] for res in sorted(corrresults)]
 ncorrs = [res[1] for res in sorted(ncorrresults)]
 
-resultsfile = open('/Users/Abuenameh/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Results/res.'+str(resi)+'.txt', 'w')
+# resultsfile = open('/Users/Abuenameh/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Results/res.'+str(resi)+'.txt', 'w')
+resultsfile = open('/home/ubuntu/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Results/res.'+str(resi)+'.txt', 'w')
 resultsstr = ''
 resultsstr += 'seed['+str(resi)+']='+str(seed)+';\n'
 resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
@@ -130,4 +131,4 @@ resultsstr += 'corrres['+str(resi)+']='+mathematica(corrs)+';\n'
 resultsstr += 'ncorrres['+str(resi)+']='+mathematica(ncorrs)+';\n'
 resultsstr += 'runtime['+str(resi)+']="'+str(end-start)+'";\n'
 resultsfile.write(resultsstr)
-print(resultsstr)
+# print(resultsstr)
