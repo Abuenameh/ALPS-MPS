@@ -24,7 +24,7 @@ basename = 'Tasks/bh'+str(time.time())
 L = 50
 nmax = 5
 sweeps = 400
-maxstates = 500
+maxstates = 200
 
 #prepare the input parameters
 parms = OrderedDict()
@@ -60,13 +60,13 @@ for i in range(L):
 Usort = sorted([(Ui, i) for (i, Ui) in enumerate(U)])
 
 basename = 'Tasks/bh.50.'+str(seed)
-resi = 1217
+resi = 1220
 basename = 'Tasks/bh.50.'+str(resi)
 
 parmslist = []
 # for N in range(L+1, 2*L+1):
 # for N in [L+3]:
-for N in [25]:#range(0, 2*L+1):
+for N in [43,44,45,46]:#range(0, 2*L+1):
     parmsi = deepcopy(parms)
     parmsi['N_total'] = N
     basen = N // L
