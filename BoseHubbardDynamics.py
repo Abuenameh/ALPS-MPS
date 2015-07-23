@@ -69,7 +69,7 @@ sweeps = 200
 maxstates = 400
 
 tf = 1e-6
-numsteps = 1000
+numsteps = 1500
 
 #prepare the input parameters
 parms = OrderedDict()
@@ -103,7 +103,7 @@ for i in range(L-1):
 for i in range(L):
     parms['U'+str(i)+'[Time]'] = ','.join([mathematica(UW(W)) for W in quench(7.9e10, 1.1e12, numsteps, tf / numsteps)])
 
-resi = 19
+resi = 20
 basename = 'DynamicsTasks/bhd.'+str(L)+'.'+str(resi)
 
 input_file = pyalps.writeInputFiles(basename,[parms])
