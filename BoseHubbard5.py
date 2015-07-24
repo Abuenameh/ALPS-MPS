@@ -17,7 +17,7 @@ def mathematica(x):
         return '{' + ','.join([mathematica(xi) for xi in iter(x)]) + '}'
     except:
         try:
-            return '{:.20f}'.format(x)
+            return '{:.20f}'.format(x).replace('j', 'I')
         except:
             return str(x)
 
@@ -90,10 +90,10 @@ def runmps(task, it, iN, Ui, ti, N):
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
-ts = [0.01]#np.linspace(0.01, 0.05, 5).tolist()
+ts = [0.01,0.1]#np.linspace(0.01, 0.05, 5).tolist()
 nt = len(ts)
 Us = [1]*nt
-Ns = [25,49]#range(0, 2*L+1)
+Ns = range(0, 2*L+1)
 nN = len(Ns)
 tUNs = zip(range(nt*nN), [[i, j] for i in range(nt) for j in range(nN)], [[Ui, ti, Ni] for (Ui, ti) in zip(Us, ts) for Ni in Ns])
 ntasks = len(tUNs)
