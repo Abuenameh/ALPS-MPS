@@ -8,6 +8,8 @@ from copy import deepcopy
 from scipy import sparse
 import datetime
 import os
+import matplotlib.pyplot as plt
+import pyalps.plot
 
 def mathematica(x):
     try:
@@ -25,6 +27,9 @@ Delta = -2.0e10
 alpha = 1.1e7
 
 Ng = np.sqrt(Na) * g13
+
+W_i = 7.9e10
+W_f = 1.1e12
 
 def JW(W):
     return alpha * W ** 2 / (np.sqrt(Ng ** 2 + W ** 2) ** 2)
@@ -55,22 +60,22 @@ def Wt(W_i, W_f, t):
 # \[CapitalOmega]i := 7.9*^10
 # \[CapitalOmega]f := 1.1*^12
 
-def quench(W_i, W_f, steps, dt):
-    return [Wt(W_i, W_f, i*dt) for i in 1+np.arange(steps)]
+def quench(W_i, W_f, tf, dt):
+    return [Wt(W_i, W_f, i*dt) for i in 1+np.arange(tf / dt)]
 
 # print mathematica(quench(7.9e10, 1.1e12, 100, 1e-6/100))
 # quit()
 
 basename = 'Tasks/bh'+str(time.time())
 
-L = 50
+L = 10
 nmax = 5
 sweeps = 200
 maxstates = 200
 
 tf = 1e-6
 numsteps = 1000
-dt = tf / numsteps
+dt = 1e-10#tf / numsteps
 
 #prepare the input parameters
 parms = OrderedDict()
@@ -85,14 +90,14 @@ parms['Nmax'] = nmax
 parms['SWEEPS'] = sweeps
 parms['NUMBER_EIGENVALUES'] = 1
 parms['MAXSTATES'] = maxstates
-parms['MEASURE_LOCAL[Local density]'] = 'n'
-parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
-parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
-parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
-parms['always_measure'] = 'Local density,Local density squared,One body density matrix,Density density'
+# parms['MEASURE_LOCAL[Local density]'] = 'n'
+# parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
+# parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
+# parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
+# parms['always_measure'] = 'Local density,Local density squared,One body density matrix,Density density'
 parms['init_state'] = 'local_quantumnumbers'
 parms['DT'] = dt
-parms['TIMESTEPS'] = numsteps
+# parms['TIMESTEPS'] = numsteps
 parms['COMPLEX'] = 1
 parms['N_total'] = L
 parms['init_state'] = 'local_quantumnumbers'
@@ -100,19 +105,82 @@ parms['initial_local_N'] = ','.join(['1']*L)
 parms['te_order'] = 'second'
 parms['update_each'] = 1
 for i in range(L-1):
-    parms['t'+str(i)+'[Time]'] = ','.join([mathematica(JW(W)) for W in quench(7.9e10, 1.1e12, numsteps, tf / numsteps)])
+    parms['t'+str(i)] = ','.join([mathematica(JW(W_i))])
+    # parms['t'+str(i)+'[Time]'] = ','.join([mathematica(JW(W)) for W in quench(W_i, W_f, numsteps, tf / numsteps)])
 for i in range(L):
-    parms['U'+str(i)+'[Time]'] = ','.join([mathematica(UW(W)) for W in quench(7.9e10, 1.1e12, numsteps, tf / numsteps)])
+    parms['U'+str(i)] = ','.join([mathematica(UW(W_i))])
+    # parms['U'+str(i)+'[Time]'] = ','.join([mathematica(UW(W)) for W in quench(W_i, W_f, numsteps, tf / numsteps)])
 
-resi = 31
-basename = 'DynamicsTasks/bhd.'+str(L)+'.'+str(resi)
+resi = 2
+basename = 'DynamicsTasks/bhramp.'+str(L)+'.'+str(resi)
 
 start = datetime.datetime.now()
 
-input_file = pyalps.writeInputFiles(basename,[parms])
+input_file = pyalps.writeInputFiles(basename+'.ground',[parms])
+res = pyalps.runApplication('mps_optim',input_file,writexml=True)
+
+initstate = pyalps.getResultFiles(prefix=basename+'.ground')[0].replace('xml', 'chkp')
+
+parms['initfile'] = initstate
+parms['MEASURE_OVERLAP[Overlap]'] = initstate
+parms['always_measure'] = 'Overlap'
+
+taus = np.linspace(1e-7, 1e-6, 100)#[1e-7,1.1e-7,1.2e-7]
+
+parmslist = []
+for tau in taus:
+    parmsi = deepcopy(parms)
+    parmsi['tau'] = tau
+    parmsi['TIMESTEPS'] = int(2*tau / dt)
+    for i in range(L-1):
+        parmsi['t'+str(i)+'[Time]'] = ','.join([mathematica(JW(W)) for W in quench(W_i, W_f, 2*tau, dt)])
+    for i in range(L):
+        parmsi['U'+str(i)+'[Time]'] = ','.join([mathematica(UW(W)) for W in quench(W_i, W_f, 2*tau, dt)])
+    parmslist.append(parmsi)
+
+
+input_file = pyalps.writeInputFiles(basename+'.dynamic',parmslist)
 res = pyalps.runApplication('mps_evolve',input_file,writexml=True)
 
 end = datetime.datetime.now()
+
+## simulation results
+data = pyalps.loadIterationMeasurements(pyalps.getResultFiles(prefix=basename+'.dynamic'), what=['Overlap'])
+
+p = []
+F = pyalps.collectXY(data, x='Time', y='Overlap', foreach=['tau'])
+for d in pyalps.flatten(F):
+    p.append([(d.x[-1] + 1) * d.props['dt'], 1 - abs(d.y[-1])**2])
+    # d.x =  (d.x + 1.) * d.props['dt'] # convert time index to real time
+    # d.y = abs(d.y)**2 # Loschmidt Echo defined as the module squared of the overlap
+    # d.props['label']=r'$\tau={0}$'.format( d.props['tau'] )
+
+print p
+
+# print F
+# plt.figure()
+# pyalps.plot.plot(F)
+# plt.xlabel('Time $t$')
+# plt.ylabel('Loschmidt Echo $|< \psi(0)|\psi(t) > |^2$')
+# plt.title('Loschmidt Echo vs. Time')
+# plt.legend(loc='lower right')
+#
+# plt.show()
+
+resultsfile = open(os.path.expanduser('~/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Results/rampres.'+str(resi)+'.txt'), 'w')
+resultsstr = ''
+resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
+resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
+resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
+resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
+resultsstr += 'numsteps['+str(resi)+']='+str(numsteps)+';\n'
+resultsstr += 'dt['+str(resi)+']='+mathematica(dt)+';\n'
+resultsstr += 'tf['+str(resi)+']='+mathematica(tf)+';\n'
+resultsstr += 'p['+str(resi)+']='+mathematica(p)+';\n'
+resultsstr += 'runtime['+str(resi)+']="'+str(end-start)+'";\n'
+resultsfile.write(resultsstr)
+
+quit()
 
 data = pyalps.loadIterationMeasurements(pyalps.getResultFiles(prefix=basename), what=['Local density', 'Local density squared', 'One body density matrix', 'Density density'])
 # print data[0][0][0]

@@ -27,11 +27,11 @@ def resifile(i):
 def makeres(n, m):
     return np.zeros((n, m)).tolist()
 
-numthreads = 2
+numthreads = 3
 
 L = 50
 nmax = 5
-sweeps = 200
+sweeps = 400
 maxstates = 200
 
 #prepare the input parameters
@@ -74,9 +74,9 @@ def runmps(task, it, iN, Ui, ti, N):
     t = xi[:-1] * ti
     U = xi * Ui
     for i in range(L-1):
-        parms['t'+str(i)] = t[i]
+        parmsi['t'+str(i)] = t[i]
     for i in range(L):
-        parms['U'+str(i)] = U[i]
+        parmsi['U'+str(i)] = U[i]
 
     parmsi['N_total'] = N
     basen = N // L
@@ -90,10 +90,10 @@ def runmps(task, it, iN, Ui, ti, N):
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
-ts = [0.01,0.1]#np.linspace(0.01, 0.05, 5).tolist()
+ts = [0.01]#[0.01,0.1]#np.linspace(0.01, 0.05, 5).tolist()
 nt = len(ts)
 Us = [1]*nt
-Ns = range(0, 2*L+1)
+Ns = [66,67,68]#[66,67,68,69,70]#range(0, 2*L+1)
 nN = len(Ns)
 tUNs = zip(range(nt*nN), [[i, j] for i in range(nt) for j in range(nN)], [[Ui, ti, Ni] for (Ui, ti) in zip(Us, ts) for Ni in Ns])
 ntasks = len(tUNs)
@@ -139,6 +139,7 @@ resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
 resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
 resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
 resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
+resultsstr += 'xi['+str(resi)+']='+mathematica(xi)+';\n'
 resultsstr += 'ts['+str(resi)+']='+mathematica(ts)+';\n'
 resultsstr += 'Us['+str(resi)+']='+mathematica(Us)+';\n'
 resultsstr += 'Ns['+str(resi)+']='+mathematica(Ns)+';\n'

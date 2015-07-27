@@ -21,9 +21,9 @@ def mathematica(x):
 
 basename = 'Tasks/bh'+str(time.time())
 
-L = 50
+L = 5
 nmax = 5
-sweeps = 200
+sweeps = 50#200
 maxstates = 200
 
 #prepare the input parameters
@@ -34,13 +34,13 @@ parms['LATTICE'] = 'inhomogeneous open chain lattice'
 parms['MODEL_LIBRARY'] = 'model.xml'
 parms['MODEL'] = 'boson Hubbard'
 parms['L'] = L
-parms['CONSERVED_QUANTUMNUMBERS'] = 'N'
+# parms['CONSERVED_QUANTUMNUMBERS'] = 'N'
 parms['Nmax'] = nmax
 parms['SWEEPS'] = sweeps
 parms['NUMBER_EIGENVALUES'] = 1
 parms['MAXSTATES'] = maxstates
 parms['MEASURE_LOCAL[Local density]'] = 'n'
-parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
+parms['MEASURE_LOCAL[Local density squared]'] = 'b'#'n2'
 parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
 parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
 parms['init_state'] = 'local_quantumnumbers'
@@ -61,12 +61,13 @@ Usort = sorted([(Ui, i) for (i, Ui) in enumerate(U)])
 
 basename = 'Tasks/bh.50.'+str(seed)
 resi = 1220
+resi = 2007
 basename = 'Tasks/bh.50.'+str(resi)
 
 parmslist = []
 # for N in range(L+1, 2*L+1):
 # for N in [L+3]:
-for N in range(80, 101):#[43,44,45,46]:#range(0, 2*L+1):
+for N in [5]:#range(80, 101):#[43,44,45,46]:#range(0, 2*L+1):
     parmsi = deepcopy(parms)
     parmsi['N_total'] = N
     basen = N // L
