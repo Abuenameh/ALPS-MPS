@@ -41,7 +41,19 @@ for i in range(0,int(ns)-1):
     nn = str(i + 2)
     print '  <EDGE source="' + str(i+1) + '" target="' + nn + '" id="' + str(i+1) + '" type="' + str(i) + '" vector="1"/>'
 print ' </GRAPH>'
+
+print
+
+print ' <GRAPH name = "inhomogeneous periodic chain lattice" dimension="1">'
+for i in range(0,int(ns)):
+    print '  <VERTEX id="' + str(i+1) + '" type="' + str(i) + '"><COORDINATE>' + str(i) + '</COORDINATE></VERTEX>'
+for i in range(0,int(ns)-1):
+    nn = str(i + 2)
+    print '  <EDGE source="' + str(i+1) + '" target="' + nn + '" id="' + str(i+1) + '" type="' + str(i) + '" vector="1"/>'
+print '  <EDGE source="' + ns + '" target="1" id="' + ns + '" type="' + str(int(ns)-1) + '" vector="1"/>'
+print ' </GRAPH>'
 print '</LATTICES>'
+
 
 # print '<LATTICES>'
 # print ' <GRAPH name = "inhomogeneous open chain lattice" dimension="1" vertices="' + ns + '" edges="' + nedges + '">'

@@ -20,7 +20,7 @@ def mathematica(x):
         return '{' + ','.join([mathematica(xi) for xi in iter(x)]) + '}'
     except:
         try:
-            return '{:.20f}'.format(x).replace('j', 'I')
+            return '{:.16}'.format(x).replace('j', 'I').replace('e', '*^')
         except:
             return str(x)
 
@@ -30,11 +30,8 @@ def resifile(i):
 def makeres(n, m):
     return np.zeros((n, m)).tolist()
 
-def Ef(n, U):
-    return np.sum(0.5 * U * (n**2 - n))
-
-def Edn(n, U):
-    return 0.5 * U * (2*n - 1)
+periodic = False
+twist = False
 
 numthreads = 4
 
@@ -46,8 +43,10 @@ maxstates = 200
 #prepare the input parameters
 parms = OrderedDict()
 parms['LATTICE_LIBRARY'] = 'lattice' + str(L) + '.xml'
-parms['LATTICE'] = 'inhomogeneous open chain lattice'
-# parms['LATTICE'] = 'open chain lattice'
+if periodic:
+    parms['LATTICE'] = 'inhomogeneous periodic chain lattice'
+else:
+    parms['LATTICE'] = 'inhomogeneous open chain lattice'
 parms['MODEL_LIBRARY'] = 'model.xml'
 parms['MODEL'] = 'boson Hubbard'
 parms['L'] = L
@@ -61,8 +60,6 @@ parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
 parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
 parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
 parms['init_state'] = 'local_quantumnumbers'
-# parms['init_state'] = 'thin'
-# parms['optimization'] = 'singlesite'
 
 bounds = tuple([(0, nmax)] * L)
 
@@ -87,9 +84,11 @@ def runmps(task, it, iN, Ui, ti, N):
     parmsi['it'] = it
     parmsi['iN'] = iN
 
-    t = xi[:-1] * ti
+    t = xi * ti
+    if twist:
+        t[0] *= -1
     U = xi * Ui
-    for i in range(L-1):
+    for i in range(L):
         parmsi['t'+str(i)] = t[i]
     for i in range(L):
         parmsi['U'+str(i)] = U[i]
@@ -102,52 +101,14 @@ def runmps(task, it, iN, Ui, ti, N):
         model = Model(Minimize(E), [Sum(ns) == N])
         solver = model.load('SCIP')
         solver.solve()
-        parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
     except:
         basen = N // L
-        localqn = [basen] * L
+        ns = [basen] * L
         rem = N % L
         excessi = [i for (xii, i) in xisort[:rem]]
         for i in excessi:
-            localqn[i] += 1
-        parmsi['initial_local_N'] = ','.join([str(n) for n in localqn])
-
-    # parmsi['N_total'] = N
-    # constraints = {'type': 'eq', 'fun': lambda n: np.sum(n) - N, 'jac': lambda n: np.array([1]*L)}
-    # res = scipy.optimize.minimize(Ef, np.array([1]*L), method='SLSQP', args=(U,), jac=Edn, bounds=bounds, constraints=constraints)
-    # nres = res['x']
-    # nround = nres.round()
-    # ndiff = int(N - np.sum(nround))
-    # diff = nres - nround
-    # difford = np.argsort(diff)
-    # if ndiff > 0:
-    #     for i in range(1, ndiff+1):
-    #         nround[difford[-i]] += 1
-    # elif ndiff < 0:
-    #     for i in range(-ndiff):
-    #         nround[difford[i]] -= 1
-    # print N
-    # print nround
-    # print nres
-    # parmsi['initial_local_N'] = ','.join([str(n) for n in nround])
-
-    # parmsi['N_total'] = N
-    # basen = N // L
-    # localqn = [basen] * L
-    # rem = N % L
-    # excessi = [i for (xii, i) in xisort[:rem+3]]
-    # time.sleep(2)
-    # random.seed()
-    # random.shuffle(excessi)
-    # excessi = excessi[:rem]
-    # for i in excessi:
-    #     localqn[i] += 1
-    # # random.seed()
-    # # random.shuffle(localqn)
-    # parmsi['initial_local_N'] = ','.join([str(n) for n in localqn])
-    # # parmsi['initial_local_N'] = '1,1,2,2'
-    # parmsi['initial_local_N'] = '1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,2,2,1,2,1,1,1,2,1,1,2,1,1,2,2,1,2,2,1,1,\
-# 1,2,1,1,1,1,2,1,1,1,1,1,2,1,2'
+            ns[i] += 1
+    parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
 
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
@@ -155,7 +116,7 @@ def runmps(task, it, iN, Ui, ti, N):
 ts = [0.1]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[1e-10,1e-9,1e-8,1e-7,1e-6,1e-5,1e-4,1e-3,1e-2,1e-1]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[0.01,0.1]#np.linspace(0.01, 0.05, 5).tolist()
 nt = len(ts)
 Us = [1]*nt
-Ns = range(0,2*L+1)#[35,36,37]#[32]*12#range(32,40)#range(38, 46)#[40,41,42,43]#range(25, 2*L+1)#range(51,70)#[66,66,66,66,66,66,66,66,66]#[66,67,68]#[66,67,68,69,70]#range(0, 2*L+1)
+Ns = range(0, 2*L+1)#range(23,27)#range(25,2*L+1)#[35,36,37]#[32]*12#range(32,40)#range(38, 46)#[40,41,42,43]#range(25, 2*L+1)#range(51,70)#[66,66,66,66,66,66,66,66,66]#[66,67,68]#[66,67,68,69,70]#range(0, 2*L+1)
 nN = len(Ns)
 tUNs = zip(range(nt*nN), [[i, j] for i in range(nt) for j in range(nN)], [[Ui, ti, Ni] for (Ui, ti) in zip(Us, ts) for Ni in Ns])
 ntasks = len(tUNs)

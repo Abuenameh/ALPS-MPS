@@ -2,6 +2,7 @@ __author__ = 'Abuenameh'
 
 import pyalps
 import numpy as np
+import scipy.optimize
 from collections import OrderedDict
 import time
 from copy import deepcopy
@@ -12,13 +13,14 @@ import os
 import progressbar
 import concurrent.futures
 import random
+from Numberjack import VarArray, Model, Sum, Minimize
 
 def mathematica(x):
     try:
         return '{' + ','.join([mathematica(xi) for xi in iter(x)]) + '}'
     except:
         try:
-            return '{:.20f}'.format(x).replace('j', 'I')
+            return '{:.16}'.format(x).replace('j', 'I').replace('e', '*^')
         except:
             return str(x)
 
@@ -28,18 +30,40 @@ def resifile(i):
 def makeres(n, m):
     return np.zeros((n, m)).tolist()
 
-numthreads = 3
+Na = 1000
+g13 = 2.5e9
+g24 = 2.5e9
+Delta = -2.0e10
+alpha = 1.1e7
 
-L = 50
+Ng = np.sqrt(Na) * g13
+
+def JW(W):
+    J = np.zeros(L)
+    J[L-1] = alpha * W[L-1] * W[0] / (np.sqrt(Ng ** 2 + W[L-1] ** 2) * np.sqrt(Ng ** 2 + W[0] ** 2))
+    # J = np.zeros(L-1)
+    for i in range(0, L-1):
+        J[i] = alpha * W[i] * W[i+1] / (np.sqrt(Ng ** 2 + W[i] ** 2) * np.sqrt(Ng ** 2 + W[i+1] ** 2))
+    return J
+
+def JWi(W):
+    return alpha * W ** 2 / (Ng ** 2 + W ** 2)
+
+def UW(W):
+    return -2*(g24 ** 2) / Delta * (Ng ** 2 * W ** 2) / ((Ng ** 2 + W ** 2) ** 2)
+
+numthreads = 4
+
+L = 25
 nmax = 5
-sweeps = 200
+sweeps = 100
 maxstates = 200
 
 #prepare the input parameters
 parms = OrderedDict()
 parms['LATTICE_LIBRARY'] = 'lattice' + str(L) + '.xml'
-parms['LATTICE'] = 'inhomogeneous open chain lattice'
-# parms['LATTICE'] = 'open chain lattice'
+# parms['LATTICE'] = 'inhomogeneous open chain lattice'
+parms['LATTICE'] = 'inhomogeneous periodic chain lattice'
 parms['MODEL_LIBRARY'] = 'model.xml'
 parms['MODEL'] = 'boson Hubbard'
 parms['L'] = L
@@ -54,10 +78,15 @@ parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
 parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
 parms['init_state'] = 'local_quantumnumbers'
 
+bounds = tuple([(0, nmax)] * L)
+
 seed = int(sys.argv[1])
 np.random.seed(seed)
 ximax = float(sys.argv[2])
 xi = (1 + ximax * np.random.uniform(-1, 1, L))
+# xi = np.array([1.0488135039273247529, 1.2151893663724195882, 1.1027633760716439859, \
+# 1.04488318299689675328, 0.9236547993389047084])
+# xi = np.array([1]*L)
 xisort = sorted([(xii, i) for (i, xii) in enumerate(xi)])
 
 resi = int(sys.argv[3])
@@ -67,45 +96,54 @@ while os.path.exists(resdir + resifile(resi)):
 
 basename = 'Tasks/bh.' + str(L) + '.' + str(resi) + '.'
 
-def runmps(task, it, iN, Ui, ti, N):
+def runmps(task, iW, iN, Wi, N):
     parmsi = deepcopy(parms)
-    parmsi['it'] = it
+    parmsi['iW'] = iW
     parmsi['iN'] = iN
 
-    t = xi[:-1] * ti
-    U = xi * Ui
-    for i in range(L-1):
+    W = Wi * xi
+    t = JW(W)
+    U = UW(W)
+    t[0] *= -1
+    # for i in range(L-1):
+    for i in range(L):
         parmsi['t'+str(i)] = t[i]
     for i in range(L):
         parmsi['U'+str(i)] = U[i]
 
     parmsi['N_total'] = N
-    basen = N // L
-    localqn = [basen] * L
-    rem = N % L
-    excessi = [i for (xii, i) in xisort[:rem]]
-    for i in excessi:
-        localqn[i] += 1
-    random.shuffle(localqn)
-    parmsi['initial_local_N'] = ','.join([str(n) for n in localqn])
+
+    try:
+        ns = VarArray(L, nmax)
+        E = Sum([n*(n-1) for n in ns], U.tolist())
+        model = Model(Minimize(E), [Sum(ns) == N])
+        solver = model.load('SCIP')
+        solver.solve()
+    except:
+        basen = N // L
+        ns = [basen] * L
+        rem = N % L
+        excessi = [i for (xii, i) in xisort[:rem]]
+        for i in excessi:
+            ns[i] += 1
+    parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
 
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
-ts = [0.01]#[0.01,0.1]#np.linspace(0.01, 0.05, 5).tolist()
-nt = len(ts)
-Us = [1]*nt
-Ns = [66,67,68]#[66,67,68,69,70]#range(0, 2*L+1)
+Ws = []
+nW = len(Ws)
+Ns = range(23,27)
 nN = len(Ns)
-tUNs = zip(range(nt*nN), [[i, j] for i in range(nt) for j in range(nN)], [[Ui, ti, Ni] for (Ui, ti) in zip(Us, ts) for Ni in Ns])
-ntasks = len(tUNs)
+WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
+ntasks = len(WNs)
 
 start = datetime.datetime.now()
 
 pbar = progressbar.ProgressBar(widgets=[progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.Timer()], maxval=ntasks).start()
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=numthreads) as executor:
-    futures = [executor.submit(runmps, task, it, iN, Ui, ti, N) for (task, [it, iN], [Ui, ti, N]) in tUNs]
+    futures = [executor.submit(runmps, task, iW, iN, Wi, N) for (task, [iW, iN], [Wi, N]) in WNs]
     for future in pbar(concurrent.futures.as_completed(futures)):
         future.result()
 
@@ -114,25 +152,25 @@ end = datetime.datetime.now()
 #load all measurements for all states
 data = pyalps.loadEigenstateMeasurements(pyalps.getResultFiles(prefix=basename))
 
-Es = makeres(nt, nN)
-ns = makeres(nt, nN)
-n2s = makeres(nt, nN)
-corrs = makeres(nt, nN)
-ncorrs = makeres(nt, nN)
+Es = makeres(nW, nN)
+ns = makeres(nW, nN)
+n2s = makeres(nW, nN)
+corrs = makeres(nW, nN)
+ncorrs = makeres(nW, nN)
 for d in data:
     for s in d:
-        it = int(s.props['it'])
+        iW = int(s.props['iW'])
         iN = int(s.props['iN'])
         if(s.props['observable'] == 'Energy'):
-            Es[it][iN] = s.y[0]
+            Es[iW][iN] = s.y[0]
         if(s.props['observable'] == 'Local density'):
-            ns[it][iN] = s.y[0]
+            ns[iW][iN] = s.y[0]
         if(s.props['observable'] == 'Local density squared'):
-            n2s[it][iN] = s.y[0]
+            n2s[iW][iN] = s.y[0]
         if(s.props['observable'] == 'One body density matrix'):
-            corrs[it][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
+            corrs[iW][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
         if(s.props['observable'] == 'Density density'):
-            ncorrs[it][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
+            ncorrs[iW][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
 
 resultsfile = open(resdir + 'res.'+str(resi)+'.txt', 'w')
 resultsstr = ''
@@ -142,8 +180,9 @@ resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
 resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
 resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
 resultsstr += 'xi['+str(resi)+']='+mathematica(xi)+';\n'
-resultsstr += 'ts['+str(resi)+']='+mathematica(ts)+';\n'
-resultsstr += 'Us['+str(resi)+']='+mathematica(Us)+';\n'
+resultsstr += 'Ws['+str(resi)+']='+mathematica(Ws)+';\n'
+resultsstr += 'ts['+str(resi)+']='+mathematica([JWi(Wi) for Wi in Ws])+';\n'
+resultsstr += 'Us['+str(resi)+']='+mathematica([UW(Wi) for Wi in Ws])+';\n'
 resultsstr += 'Ns['+str(resi)+']='+mathematica(Ns)+';\n'
 resultsstr += 'Eres['+str(resi)+']='+mathematica(Es)+';\n'
 resultsstr += 'nres['+str(resi)+']='+mathematica(ns)+';\n'
