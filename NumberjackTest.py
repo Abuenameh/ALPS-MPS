@@ -20,7 +20,7 @@ vars = VarArray(5, 0, 4)
 qwe = [n*(n-1) for n in vars]
 obj = Sum(qwe, U)
 print obj
-model = Model(Minimize(obj), [Sum(vars) == 4])
+model = Model(Minimize(obj), [Sum(vars) == 6])
 solver = model.load('SCIP')
 solver.solve()
 print vars
