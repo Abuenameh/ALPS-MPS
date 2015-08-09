@@ -30,14 +30,14 @@ def resifile(i):
 def makeres(n, m):
     return np.zeros((n, m)).tolist()
 
-periodic = False
-twist = False
+periodic = int(sys.argv[4]) == 1
+twist = int(sys.argv[5]) == 1
 
 numthreads = 4
 
 L = 25
 nmax = 5
-sweeps = 100
+sweeps = 200
 maxstates = 200
 
 #prepare the input parameters
@@ -116,7 +116,7 @@ def runmps(task, it, iN, Ui, ti, N):
 ts = [0.01]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[1e-10,1e-9,1e-8,1e-7,1e-6,1e-5,1e-4,1e-3,1e-2,1e-1]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[0.01,0.1]#np.linspace(0.01, 0.05, 5).tolist()
 nt = len(ts)
 Us = [1]*nt
-Ns = [0]#range(0, 2*L+1)#range(23,27)#range(25,2*L+1)#[35,36,37]#[32]*12#range(32,40)#range(38, 46)#[40,41,42,43]#range(25, 2*L+1)#range(51,70)#[66,66,66,66,66,66,66,66,66]#[66,67,68]#[66,67,68,69,70]#range(0, 2*L+1)
+Ns = range(0, 2*L+1)#range(23,27)#range(25,2*L+1)#[35,36,37]#[32]*12#range(32,40)#range(38, 46)#[40,41,42,43]#range(25, 2*L+1)#range(51,70)#[66,66,66,66,66,66,66,66,66]#[66,67,68]#[66,67,68,69,70]#range(0, 2*L+1)
 nN = len(Ns)
 tUNs = zip(range(nt*nN), [[i, j] for i in range(nt) for j in range(nN)], [[Ui, ti, Ni] for (Ui, ti) in zip(Us, ts) for Ni in Ns])
 ntasks = len(tUNs)
@@ -162,6 +162,8 @@ resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
 resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
 resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
 resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
+resultsstr += 'periodic['+str(resi)+']='+str(periodic)+';\n'
+resultsstr += 'twisted['+str(resi)+']='+str(twist)+';\n'
 resultsstr += 'xi['+str(resi)+']='+mathematica(xi)+';\n'
 resultsstr += 'ts['+str(resi)+']='+mathematica(ts)+';\n'
 resultsstr += 'Us['+str(resi)+']='+mathematica(Us)+';\n'
