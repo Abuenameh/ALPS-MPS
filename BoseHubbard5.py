@@ -14,6 +14,7 @@ import progressbar
 import concurrent.futures
 import random
 from Numberjack import VarArray, Model, Sum, Minimize
+import subprocess
 
 def mathematica(x):
     try:
@@ -33,7 +34,7 @@ def makeres(n, m):
 periodic = int(sys.argv[4]) == 1
 twist = int(sys.argv[5]) == 1
 
-numthreads = 4
+numthreads = 35
 
 L = 25
 nmax = 5
@@ -111,6 +112,7 @@ def runmps(task, it, iN, Ui, ti, N):
     parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
 
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
+    # subprocess.call(['bash','-c','read'])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
 ts = [0.01]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[1e-10,1e-9,1e-8,1e-7,1e-6,1e-5,1e-4,1e-3,1e-2,1e-1]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[0.01,0.1]#np.linspace(0.01, 0.05, 5).tolist()
