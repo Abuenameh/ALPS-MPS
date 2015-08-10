@@ -103,6 +103,7 @@ def runmps(task, it, iN, Ui, ti, N):
         E = Sum([n*(n-1) for n in ns], U.tolist())
         model = Model(Minimize(E), [Sum(ns) == N])
         solver = model.load('SCIP')
+        solver.setTimeLimit(60)
         solver.solve()
     except:
         basen = N // L
