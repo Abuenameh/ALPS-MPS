@@ -115,67 +115,72 @@ def runmps(task, it, iN, Ui, ti, N):
     # subprocess.call(['bash','-c','read'])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
-ts = [0.01]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[1e-10,1e-9,1e-8,1e-7,1e-6,1e-5,1e-4,1e-3,1e-2,1e-1]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[0.01,0.1]#np.linspace(0.01, 0.05, 5).tolist()
-nt = len(ts)
-Us = [1]*nt
-Ns = range(0, 2*L+1)#range(23,27)#range(25,2*L+1)#[35,36,37]#[32]*12#range(32,40)#range(38, 46)#[40,41,42,43]#range(25, 2*L+1)#range(51,70)#[66,66,66,66,66,66,66,66,66]#[66,67,68]#[66,67,68,69,70]#range(0, 2*L+1)
-nN = len(Ns)
-tUNs = zip(range(nt*nN), [[i, j] for i in range(nt) for j in range(nN)], [[Ui, ti, Ni] for (Ui, ti) in zip(Us, ts) for Ni in Ns])
-ntasks = len(tUNs)
+def main():
+    ts = [0.01]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[1e-10,1e-9,1e-8,1e-7,1e-6,1e-5,1e-4,1e-3,1e-2,1e-1]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[0.01,0.1]#np.linspace(0.01, 0.05, 5).tolist()
+    nt = len(ts)
+    Us = [1]*nt
+    Ns = range(0, 2*L+1)#range(23,27)#range(25,2*L+1)#[35,36,37]#[32]*12#range(32,40)#range(38, 46)#[40,41,42,43]#range(25, 2*L+1)#range(51,70)#[66,66,66,66,66,66,66,66,66]#[66,67,68]#[66,67,68,69,70]#range(0, 2*L+1)
+    nN = len(Ns)
+    tUNs = zip(range(nt*nN), [[i, j] for i in range(nt) for j in range(nN)], [[Ui, ti, Ni] for (Ui, ti) in zip(Us, ts) for Ni in Ns])
+    ntasks = len(tUNs)
 
-start = datetime.datetime.now()
+    start = datetime.datetime.now()
 
-pbar = progressbar.ProgressBar(widgets=[progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.Timer()], maxval=ntasks).start()
+    pbar = progressbar.ProgressBar(widgets=[progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.Timer()], maxval=ntasks).start()
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=numthreads) as executor:
-    futures = [executor.submit(runmps, task, it, iN, Ui, ti, N) for (task, [it, iN], [Ui, ti, N]) in tUNs]
-    for future in pbar(concurrent.futures.as_completed(futures)):
-        future.result()
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=numthreads) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=numthreads) as executor:
+        futures = [executor.submit(runmps, task, it, iN, Ui, ti, N) for (task, [it, iN], [Ui, ti, N]) in tUNs]
+        for future in pbar(concurrent.futures.as_completed(futures)):
+            future.result()
 
-end = datetime.datetime.now()
+    end = datetime.datetime.now()
 
-#load all measurements for all states
-data = pyalps.loadEigenstateMeasurements(pyalps.getResultFiles(prefix=basename))
+    #load all measurements for all states
+    data = pyalps.loadEigenstateMeasurements(pyalps.getResultFiles(prefix=basename))
 
-Es = makeres(nt, nN)
-ns = makeres(nt, nN)
-n2s = makeres(nt, nN)
-corrs = makeres(nt, nN)
-ncorrs = makeres(nt, nN)
-for d in data:
-    for s in d:
-        it = int(s.props['it'])
-        iN = int(s.props['iN'])
-        if(s.props['observable'] == 'Energy'):
-            Es[it][iN] = s.y[0]
-        if(s.props['observable'] == 'Local density'):
-            ns[it][iN] = s.y[0]
-        if(s.props['observable'] == 'Local density squared'):
-            n2s[it][iN] = s.y[0]
-        if(s.props['observable'] == 'One body density matrix'):
-            corrs[it][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
-        if(s.props['observable'] == 'Density density'):
-            ncorrs[it][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
+    Es = makeres(nt, nN)
+    ns = makeres(nt, nN)
+    n2s = makeres(nt, nN)
+    corrs = makeres(nt, nN)
+    ncorrs = makeres(nt, nN)
+    for d in data:
+        for s in d:
+            it = int(s.props['it'])
+            iN = int(s.props['iN'])
+            if(s.props['observable'] == 'Energy'):
+                Es[it][iN] = s.y[0]
+            if(s.props['observable'] == 'Local density'):
+                ns[it][iN] = s.y[0]
+            if(s.props['observable'] == 'Local density squared'):
+                n2s[it][iN] = s.y[0]
+            if(s.props['observable'] == 'One body density matrix'):
+                corrs[it][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
+            if(s.props['observable'] == 'Density density'):
+                ncorrs[it][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
 
-resultsfile = open(resdir + 'res.'+str(resi)+'.txt', 'w')
-resultsstr = ''
-resultsstr += 'seed['+str(resi)+']='+str(seed)+';\n'
-resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
-resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
-resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
-resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
-resultsstr += 'periodic['+str(resi)+']='+str(periodic)+';\n'
-resultsstr += 'twisted['+str(resi)+']='+str(twist)+';\n'
-resultsstr += 'xi['+str(resi)+']='+mathematica(xi)+';\n'
-resultsstr += 'ts['+str(resi)+']='+mathematica(ts)+';\n'
-resultsstr += 'Us['+str(resi)+']='+mathematica(Us)+';\n'
-resultsstr += 'Ns['+str(resi)+']='+mathematica(Ns)+';\n'
-resultsstr += 'Eres['+str(resi)+']='+mathematica(Es)+';\n'
-resultsstr += 'nres['+str(resi)+']='+mathematica(ns)+';\n'
-resultsstr += 'n2res['+str(resi)+']='+mathematica(n2s)+';\n'
-resultsstr += 'corrres['+str(resi)+']='+mathematica(corrs)+';\n'
-resultsstr += 'ncorrres['+str(resi)+']='+mathematica(ncorrs)+';\n'
-resultsstr += 'runtime['+str(resi)+']="'+str(end-start)+'";\n'
-resultsfile.write(resultsstr)
+    resultsfile = open(resdir + 'res.'+str(resi)+'.txt', 'w')
+    resultsstr = ''
+    resultsstr += 'seed['+str(resi)+']='+str(seed)+';\n'
+    resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
+    resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
+    resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
+    resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
+    resultsstr += 'periodic['+str(resi)+']='+str(periodic)+';\n'
+    resultsstr += 'twisted['+str(resi)+']='+str(twist)+';\n'
+    resultsstr += 'xi['+str(resi)+']='+mathematica(xi)+';\n'
+    resultsstr += 'ts['+str(resi)+']='+mathematica(ts)+';\n'
+    resultsstr += 'Us['+str(resi)+']='+mathematica(Us)+';\n'
+    resultsstr += 'Ns['+str(resi)+']='+mathematica(Ns)+';\n'
+    resultsstr += 'Eres['+str(resi)+']='+mathematica(Es)+';\n'
+    resultsstr += 'nres['+str(resi)+']='+mathematica(ns)+';\n'
+    resultsstr += 'n2res['+str(resi)+']='+mathematica(n2s)+';\n'
+    resultsstr += 'corrres['+str(resi)+']='+mathematica(corrs)+';\n'
+    resultsstr += 'ncorrres['+str(resi)+']='+mathematica(ncorrs)+';\n'
+    resultsstr += 'runtime['+str(resi)+']="'+str(end-start)+'";\n'
+    resultsfile.write(resultsstr)
 
-print 'Res: ' + str(resi)
+    print 'Res: ' + str(resi)
+
+if __name__ == '__main__':
+    main()
