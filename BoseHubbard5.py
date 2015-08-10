@@ -97,6 +97,8 @@ def runmps(task, it, iN, Ui, ti, N):
     parmsi['N_total'] = N
 
     try:
+        if ximax == 0:
+            raise ValueError
         ns = VarArray(L, nmax)
         E = Sum([n*(n-1) for n in ns], U.tolist())
         model = Model(Minimize(E), [Sum(ns) == N])
