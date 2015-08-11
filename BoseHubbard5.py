@@ -17,6 +17,8 @@ from Numberjack import VarArray, Model, Sum, Minimize
 import subprocess
 
 def mathematica(x):
+    if x == 'True' or x == 'False':
+        return x
     try:
         return '{' + ','.join([mathematica(xi) for xi in iter(x)]) + '}'
     except:
@@ -61,6 +63,7 @@ parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
 parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
 parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
 parms['init_state'] = 'local_quantumnumbers'
+parms['chkp_each'] = sweeps
 
 bounds = tuple([(0, nmax)] * L)
 
@@ -103,8 +106,9 @@ def runmps(task, it, iN, Ui, ti, N):
         E = Sum([n*(n-1) for n in ns], U.tolist())
         model = Model(Minimize(E), [Sum(ns) == N])
         solver = model.load('SCIP')
-        solver.setTimeLimit(60)
-        solver.solve()
+        solver.setTimeLimit(600)
+        solved = solver.solve()
+        parmsi['solved'] = solved
     except:
         basen = N // L
         ns = [basen] * L
@@ -114,9 +118,11 @@ def runmps(task, it, iN, Ui, ti, N):
             ns[i] += 1
     parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
 
+    # subprocess.call(['mkdir Tasks/Task.'+str(task)], shell=True)
+    # input_file = pyalps.writeInputFiles('Tasks/Task.' + str(task) + '/bh.' + str(L) + '.' + str(resi) + '.' + str(task), [parmsi])
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
     # subprocess.call(['bash','-c','read'])
-    pyalps.runApplication('mps_optim', input_file, writexml=True)
+    pyalps.runApplication('mps_optim', input_file)
 
 def main():
     ts = [0.01]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[1e-10,1e-9,1e-8,1e-7,1e-6,1e-5,1e-4,1e-3,1e-2,1e-1]#[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]#[0.01,0.1]#np.linspace(0.01, 0.05, 5).tolist()
@@ -142,6 +148,7 @@ def main():
     #load all measurements for all states
     data = pyalps.loadEigenstateMeasurements(pyalps.getResultFiles(prefix=basename))
 
+    solved = makeres(nt, nN)
     Es = makeres(nt, nN)
     ns = makeres(nt, nN)
     n2s = makeres(nt, nN)
@@ -151,6 +158,7 @@ def main():
         for s in d:
             it = int(s.props['it'])
             iN = int(s.props['iN'])
+            solved[it][iN] = s.props['solved']
             if(s.props['observable'] == 'Energy'):
                 Es[it][iN] = s.y[0]
             if(s.props['observable'] == 'Local density'):
@@ -175,6 +183,7 @@ def main():
     resultsstr += 'ts['+str(resi)+']='+mathematica(ts)+';\n'
     resultsstr += 'Us['+str(resi)+']='+mathematica(Us)+';\n'
     resultsstr += 'Ns['+str(resi)+']='+mathematica(Ns)+';\n'
+    resultsstr += 'solved['+str(resi)+']='+mathematica(solved)+';\n'
     resultsstr += 'Eres['+str(resi)+']='+mathematica(Es)+';\n'
     resultsstr += 'nres['+str(resi)+']='+mathematica(ns)+';\n'
     resultsstr += 'n2res['+str(resi)+']='+mathematica(n2s)+';\n'
