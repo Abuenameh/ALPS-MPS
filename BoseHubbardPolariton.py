@@ -2,9 +2,7 @@ __author__ = 'Abuenameh'
 
 import pyalps
 import numpy as np
-import scipy.optimize
 from collections import OrderedDict
-import time
 from copy import deepcopy
 from scipy import sparse
 import datetime
@@ -12,10 +10,11 @@ import sys
 import os
 import progressbar
 import concurrent.futures
-import random
 from Numberjack import VarArray, Model, Sum, Minimize
 
 def mathematica(x):
+    if x == 'True' or x == 'False':
+        return x
     try:
         return '{' + ','.join([mathematica(xi) for xi in iter(x)]) + '}'
     except:
@@ -25,7 +24,7 @@ def mathematica(x):
             return str(x)
 
 def resifile(i):
-    return 'res.' + str(i) + '.txt'
+    return 'bhpres.' + str(i) + '.txt'
 
 def makeres(n, m):
     return np.zeros((n, m)).tolist()
@@ -52,18 +51,23 @@ def JWi(W):
 def UW(W):
     return -2*(g24 ** 2) / Delta * (Ng ** 2 * W ** 2) / ((Ng ** 2 + W ** 2) ** 2)
 
-numthreads = 4
+periodic = int(sys.argv[4]) == 1
+twist = int(sys.argv[5]) == 1
+
+numthreads = 35
 
 L = 25
 nmax = 5
-sweeps = 100
+sweeps = 200
 maxstates = 200
 
 #prepare the input parameters
 parms = OrderedDict()
 parms['LATTICE_LIBRARY'] = 'lattice' + str(L) + '.xml'
-# parms['LATTICE'] = 'inhomogeneous open chain lattice'
-parms['LATTICE'] = 'inhomogeneous periodic chain lattice'
+if periodic:
+    parms['LATTICE'] = 'inhomogeneous periodic chain lattice'
+else:
+    parms['LATTICE'] = 'inhomogeneous open chain lattice'
 parms['MODEL_LIBRARY'] = 'model.xml'
 parms['MODEL'] = 'boson Hubbard'
 parms['L'] = L
@@ -77,6 +81,7 @@ parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
 parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
 parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
 parms['init_state'] = 'local_quantumnumbers'
+parms['chkp_each'] = sweeps
 
 bounds = tuple([(0, nmax)] * L)
 
@@ -105,7 +110,6 @@ def runmps(task, iW, iN, Wi, N):
     t = JW(W)
     U = UW(W)
     t[0] *= -1
-    # for i in range(L-1):
     for i in range(L):
         parmsi['t'+str(i)] = t[i]
     for i in range(L):
@@ -114,11 +118,15 @@ def runmps(task, iW, iN, Wi, N):
     parmsi['N_total'] = N
 
     try:
+        if ximax == 0:
+            raise ValueError
         ns = VarArray(L, nmax)
         E = Sum([n*(n-1) for n in ns], U.tolist())
         model = Model(Minimize(E), [Sum(ns) == N])
         solver = model.load('SCIP')
-        solver.solve()
+        solver.setTimeLimit(600)
+        solved = solver.solve()
+        parmsi['solved'] = solved
     except:
         basen = N // L
         ns = [basen] * L
@@ -131,65 +139,74 @@ def runmps(task, iW, iN, Wi, N):
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
-Ws = []
-nW = len(Ws)
-Ns = range(23,27)
-nN = len(Ns)
-WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
-ntasks = len(WNs)
+def main():
+    Ws = []
+    nW = len(Ws)
+    Ns = range(23,27)
+    nN = len(Ns)
+    WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
+    ntasks = len(WNs)
 
-start = datetime.datetime.now()
+    start = datetime.datetime.now()
 
-pbar = progressbar.ProgressBar(widgets=[progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.Timer()], maxval=ntasks).start()
+    pbar = progressbar.ProgressBar(widgets=[progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.Timer()], maxval=ntasks).start()
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=numthreads) as executor:
-    futures = [executor.submit(runmps, task, iW, iN, Wi, N) for (task, [iW, iN], [Wi, N]) in WNs]
-    for future in pbar(concurrent.futures.as_completed(futures)):
-        future.result()
+    with concurrent.futures.ProcessPoolExecutor(max_workers=numthreads) as executor:
+        futures = [executor.submit(runmps, task, iW, iN, Wi, N) for (task, [iW, iN], [Wi, N]) in WNs]
+        for future in pbar(concurrent.futures.as_completed(futures)):
+            future.result()
 
-end = datetime.datetime.now()
+    end = datetime.datetime.now()
 
-#load all measurements for all states
-data = pyalps.loadEigenstateMeasurements(pyalps.getResultFiles(prefix=basename))
+    #load all measurements for all states
+    data = pyalps.loadEigenstateMeasurements(pyalps.getResultFiles(prefix=basename))
 
-Es = makeres(nW, nN)
-ns = makeres(nW, nN)
-n2s = makeres(nW, nN)
-corrs = makeres(nW, nN)
-ncorrs = makeres(nW, nN)
-for d in data:
-    for s in d:
-        iW = int(s.props['iW'])
-        iN = int(s.props['iN'])
-        if(s.props['observable'] == 'Energy'):
-            Es[iW][iN] = s.y[0]
-        if(s.props['observable'] == 'Local density'):
-            ns[iW][iN] = s.y[0]
-        if(s.props['observable'] == 'Local density squared'):
-            n2s[iW][iN] = s.y[0]
-        if(s.props['observable'] == 'One body density matrix'):
-            corrs[iW][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
-        if(s.props['observable'] == 'Density density'):
-            ncorrs[iW][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
+    solved = makeres(nW, nN)
+    Es = makeres(nW, nN)
+    ns = makeres(nW, nN)
+    n2s = makeres(nW, nN)
+    corrs = makeres(nW, nN)
+    ncorrs = makeres(nW, nN)
+    for d in data:
+        for s in d:
+            iW = int(s.props['iW'])
+            iN = int(s.props['iN'])
+            solved[iW][iN] = s.props['solved']
+            if(s.props['observable'] == 'Energy'):
+                Es[iW][iN] = s.y[0]
+            if(s.props['observable'] == 'Local density'):
+                ns[iW][iN] = s.y[0]
+            if(s.props['observable'] == 'Local density squared'):
+                n2s[iW][iN] = s.y[0]
+            if(s.props['observable'] == 'One body density matrix'):
+                corrs[iW][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
+            if(s.props['observable'] == 'Density density'):
+                ncorrs[iW][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
 
-resultsfile = open(resdir + 'res.'+str(resi)+'.txt', 'w')
-resultsstr = ''
-resultsstr += 'seed['+str(resi)+']='+str(seed)+';\n'
-resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
-resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
-resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
-resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
-resultsstr += 'xi['+str(resi)+']='+mathematica(xi)+';\n'
-resultsstr += 'Ws['+str(resi)+']='+mathematica(Ws)+';\n'
-resultsstr += 'ts['+str(resi)+']='+mathematica([JWi(Wi) for Wi in Ws])+';\n'
-resultsstr += 'Us['+str(resi)+']='+mathematica([UW(Wi) for Wi in Ws])+';\n'
-resultsstr += 'Ns['+str(resi)+']='+mathematica(Ns)+';\n'
-resultsstr += 'Eres['+str(resi)+']='+mathematica(Es)+';\n'
-resultsstr += 'nres['+str(resi)+']='+mathematica(ns)+';\n'
-resultsstr += 'n2res['+str(resi)+']='+mathematica(n2s)+';\n'
-resultsstr += 'corrres['+str(resi)+']='+mathematica(corrs)+';\n'
-resultsstr += 'ncorrres['+str(resi)+']='+mathematica(ncorrs)+';\n'
-resultsstr += 'runtime['+str(resi)+']="'+str(end-start)+'";\n'
-resultsfile.write(resultsstr)
+    resultsfile = open(resdir + resifile(resi), 'w')
+    resultsstr = ''
+    resultsstr += 'seed['+str(resi)+']='+str(seed)+';\n'
+    resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
+    resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
+    resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
+    resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
+    resultsstr += 'periodic['+str(resi)+']='+str(periodic)+';\n'
+    resultsstr += 'twisted['+str(resi)+']='+str(twist)+';\n'
+    resultsstr += 'xi['+str(resi)+']='+mathematica(xi)+';\n'
+    resultsstr += 'Ws['+str(resi)+']='+mathematica(Ws)+';\n'
+    resultsstr += 'ts['+str(resi)+']='+mathematica([JWi(Wi) for Wi in Ws])+';\n'
+    resultsstr += 'Us['+str(resi)+']='+mathematica([UW(Wi) for Wi in Ws])+';\n'
+    resultsstr += 'Ns['+str(resi)+']='+mathematica(Ns)+';\n'
+    resultsstr += 'solved['+str(resi)+']='+mathematica(solved)+';\n'
+    resultsstr += 'Eres['+str(resi)+']='+mathematica(Es)+';\n'
+    resultsstr += 'nres['+str(resi)+']='+mathematica(ns)+';\n'
+    resultsstr += 'n2res['+str(resi)+']='+mathematica(n2s)+';\n'
+    resultsstr += 'corrres['+str(resi)+']='+mathematica(corrs)+';\n'
+    resultsstr += 'ncorrres['+str(resi)+']='+mathematica(ncorrs)+';\n'
+    resultsstr += 'runtime['+str(resi)+']="'+str(end-start)+'";\n'
+    resultsfile.write(resultsstr)
 
-print 'Res: ' + str(resi)
+    print >>sys.stderr, 'Res: ' + str(resi)
+
+if __name__ == '__main__':
+    main()
