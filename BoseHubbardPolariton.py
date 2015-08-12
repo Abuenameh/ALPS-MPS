@@ -109,7 +109,8 @@ def runmps(task, iW, iN, Wi, N):
     W = Wi * xi
     t = JW(W)
     U = UW(W)
-    t[0] *= -1
+    if twist:
+        t[0] *= -1
     for i in range(L):
         parmsi['t'+str(i)] = t[i]
     for i in range(L):
@@ -140,16 +141,16 @@ def runmps(task, iW, iN, Wi, N):
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
 def main():
-    Ws = []
+    Ws = np.linspace(2e11,3.2e11,10)#[2e10]
     nW = len(Ws)
-    Ns = range(23,27)
+    Ns = range(0,2*L+1)#range(23,27)
     nN = len(Ns)
     WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
     ntasks = len(WNs)
 
     start = datetime.datetime.now()
 
-    pbar = progressbar.ProgressBar(widgets=[progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.Timer()], maxval=ntasks).start()
+    pbar = progressbar.ProgressBar(widgets=['Res: '+str(resi)+' ', progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.Timer()], maxval=ntasks).start()
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=numthreads) as executor:
         futures = [executor.submit(runmps, task, iW, iN, Wi, N) for (task, [iW, iN], [Wi, N]) in WNs]
@@ -206,7 +207,7 @@ def main():
     resultsstr += 'runtime['+str(resi)+']="'+str(end-start)+'";\n'
     resultsfile.write(resultsstr)
 
-    print >>sys.stderr, 'Res: ' + str(resi)
+    # print >>sys.stderr, 'Res: ' + str(resi)
 
 if __name__ == '__main__':
     main()

@@ -40,7 +40,7 @@ numthreads = 35
 
 L = 25
 nmax = 5
-sweeps = 200
+sweeps = 400
 maxstates = 200
 
 #prepare the input parameters
