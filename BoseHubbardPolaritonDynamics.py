@@ -10,6 +10,7 @@ import datetime
 import os
 import matplotlib.pyplot as plt
 import pyalps.plot
+import sys
 
 def mathematica(x):
     if x == 'True' or x == 'False':
@@ -75,7 +76,7 @@ sweeps = 400
 maxstates = 400
 
 tf = 1e-6
-dt = 1e-10#1e-10#tf / numsteps
+dt = float(sys.argv[3])#5e-10#1e-10#tf / numsteps
 numsteps = int(tf / dt)
 
 #prepare the input parameters
@@ -105,6 +106,7 @@ parms['init_state'] = 'local_quantumnumbers'
 parms['initial_local_N'] = ','.join(['1']*L)
 parms['te_order'] = 'second'
 parms['update_each'] = 1
+np.random.seed(int(sys.argv[1]))
 xi = (1 + 0.5 * np.random.uniform(-1, 1, L))
 for i in range(L-1):
     parms['t'+str(i)] = mathematica(JW(W_i*xi)[i])#','.join([mathematica(JW(W_i))])
@@ -113,7 +115,7 @@ for i in range(L):
     parms['U'+str(i)] = mathematica(UW(W_i*xi)[i])#','.join([mathematica(UW(W_i))])
     # parms['U'+str(i)+'[Time]'] = ','.join([mathematica(UW(W)) for W in quench(W_i, W_f, numsteps, tf / numsteps)])
 
-resi = 500 #int(sys.argv[3])
+resi = int(sys.argv[2])
 resdir = os.path.expanduser('~/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Results/')
 while os.path.exists(resdir + resifile(resi)):
     resi += 1
@@ -218,6 +220,7 @@ resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
 resultsstr += 'numsteps['+str(resi)+']='+str(numsteps)+';\n'
 resultsstr += 'dt['+str(resi)+']='+mathematica(dt)+';\n'
 resultsstr += 'tf['+str(resi)+']='+mathematica(tf)+';\n'
+resultsstr += 'xi['+str(resi)+']='+mathematica(xi)+';\n'
 # resultsstr += 'p['+str(resi)+']='+mathematica(p)+';\n'
 resultsstr += 'En['+str(resi)+']='+mathematica(E)+';\n'
 resultsstr += 'n['+str(resi)+']='+mathematica(n)+';\n'
@@ -228,6 +231,7 @@ resultsstr += 'runtime['+str(resi)+']="'+str(end-start)+'";\n'
 resultsfile.write(resultsstr)
 
 print 'Res: ' + str(resi)
+print str(end-start)
 
 quit()
 

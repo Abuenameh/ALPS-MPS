@@ -69,7 +69,7 @@ sweeps = 200
 maxstates = 200
 
 tf = 1e-6
-numsteps = 1000
+numsteps = 200
 dt = tf / numsteps
 
 #prepare the input parameters
@@ -104,7 +104,7 @@ for i in range(L-1):
 for i in range(L):
     parms['U'+str(i)+'[Time]'] = ','.join([mathematica(UW(W)) for W in quench(7.9e10, 1.1e12, numsteps, tf / numsteps)])
 
-resi = 31
+resi = 32
 basename = 'DynamicsTasks/bhd.'+str(L)+'.'+str(resi)
 
 start = datetime.datetime.now()
