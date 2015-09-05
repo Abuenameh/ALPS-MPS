@@ -106,6 +106,7 @@ parms['init_state'] = 'local_quantumnumbers'
 parms['initial_local_N'] = ','.join(['1']*L)
 parms['te_order'] = 'second'
 parms['update_each'] = 1
+parms['chkp_each'] = 10**8
 np.random.seed(int(sys.argv[1]))
 xi = (1 + 0.5 * np.random.uniform(-1, 1, L))
 for i in range(L-1):
@@ -126,7 +127,7 @@ basename = 'DynamicsTasks/bhramp.'+str(L)+'.'+str(resi)
 start = datetime.datetime.now()
 
 parms['always_measure'] = 'Local density,Local density squared,One body density matrix,Density density'
-parms['measure_each'] = numsteps/1000#1#numsteps
+parms['measure_each'] = numsteps/1000#1#numsteps/1000#1#numsteps
 
 taus = np.linspace(1e-7, 2e-7, 2)#[1e-7,1.1e-7,1.2e-7]
 
