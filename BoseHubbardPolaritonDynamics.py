@@ -70,13 +70,13 @@ def quench(W_i, W_f, xi, tf, dt):
 
 basename = 'Tasks/bh'+str(time.time())
 
-L = 10
+L = 25
 nmax = 5
 sweeps = 400
 maxstates = 400
 
 tf = 1e-6
-dt = float(sys.argv[3])#5e-10#1e-10#tf / numsteps
+dt = float(sys.argv[4])#5e-10#1e-10#tf / numsteps
 numsteps = int(tf / dt)
 
 #prepare the input parameters
@@ -107,8 +107,12 @@ parms['initial_local_N'] = ','.join(['1']*L)
 parms['te_order'] = 'second'
 parms['update_each'] = 1
 parms['chkp_each'] = 10**8
-np.random.seed(int(sys.argv[1]))
-xi = (1 + 0.5 * np.random.uniform(-1, 1, L))
+
+seed = int(sys.argv[1])
+Delta = float(sys.argv[2])
+np.random.seed(seed)
+xi = (1 + Delta * np.random.uniform(-1, 1, L))
+
 for i in range(L-1):
     parms['t'+str(i)] = mathematica(JW(W_i*xi)[i])#','.join([mathematica(JW(W_i))])
     # parms['t'+str(i)+'[Time]'] = ','.join([mathematica(JW(W)) for W in quench(W_i, W_f, numsteps, tf / numsteps)])
@@ -116,7 +120,7 @@ for i in range(L):
     parms['U'+str(i)] = mathematica(UW(W_i*xi)[i])#','.join([mathematica(UW(W_i))])
     # parms['U'+str(i)+'[Time]'] = ','.join([mathematica(UW(W)) for W in quench(W_i, W_f, numsteps, tf / numsteps)])
 
-resi = int(sys.argv[2])
+resi = int(sys.argv[3])
 resdir = os.path.expanduser('~/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Results/')
 while os.path.exists(resdir + resifile(resi)):
     resi += 1
@@ -216,6 +220,8 @@ resultsfile = open(os.path.expanduser('~/Dropbox/Amazon EC2/Simulation Results/A
 resultsstr = ''
 resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
 resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
+resultsstr += 'seed['+str(resi)+']='+str(seed)+';\n'
+resultsstr += 'Delta['+str(resi)+']='+str(Delta)+';\n'
 resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
 resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
 resultsstr += 'numsteps['+str(resi)+']='+str(numsteps)+';\n'
