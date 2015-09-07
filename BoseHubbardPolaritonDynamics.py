@@ -106,12 +106,12 @@ parms['init_state'] = 'local_quantumnumbers'
 parms['initial_local_N'] = ','.join(['1']*L)
 parms['te_order'] = 'second'
 parms['update_each'] = 1
-parms['chkp_each'] = 10**8
+parms['chkp_each'] = 1000
 
 seed = int(sys.argv[1])
-Delta = float(sys.argv[2])
+ximax = float(sys.argv[2])
 np.random.seed(seed)
-xi = (1 + Delta * np.random.uniform(-1, 1, L))
+xi = (1 + ximax * np.random.uniform(-1, 1, L))
 
 for i in range(L-1):
     parms['t'+str(i)] = mathematica(JW(W_i*xi)[i])#','.join([mathematica(JW(W_i))])
@@ -221,7 +221,7 @@ resultsstr = ''
 resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
 resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
 resultsstr += 'seed['+str(resi)+']='+str(seed)+';\n'
-resultsstr += 'Delta['+str(resi)+']='+str(Delta)+';\n'
+resultsstr += 'ximax['+str(resi)+']='+str(ximax)+';\n'
 resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
 resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
 resultsstr += 'numsteps['+str(resi)+']='+str(numsteps)+';\n'
