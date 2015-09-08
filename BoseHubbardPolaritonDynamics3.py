@@ -79,7 +79,7 @@ maxstates = 400
 tf = 1e-6
 dt = float(sys.argv[4])#5e-10#1e-10#tf / numsteps
 numsteps = int(tf / dt + 0.5)
-dt = 1e-6 / numsteps
+dt = tf / numsteps
 
 #prepare the input parameters
 parms = OrderedDict()
