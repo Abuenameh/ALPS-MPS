@@ -73,12 +73,13 @@ basename = 'Tasks/bh'+str(time.time())
 
 L = 10
 nmax = 5
-sweeps = 400
+# sweeps = 400
 maxstates = 400
 
 tf = 1e-6
 dt = float(sys.argv[4])#5e-10#1e-10#tf / numsteps
-numsteps = int(tf / dt)
+numsteps = int(tf / dt + 0.5)
+dt = 1e-6 / numsteps
 
 #prepare the input parameters
 parms = OrderedDict()
@@ -90,7 +91,7 @@ parms['MODEL'] = 'boson Hubbard'
 parms['L'] = L
 parms['CONSERVED_QUANTUMNUMBERS'] = 'N'
 parms['Nmax'] = nmax
-parms['SWEEPS'] = sweeps
+# parms['SWEEPS'] = sweeps
 parms['NUMBER_EIGENVALUES'] = 1
 parms['MAXSTATES'] = maxstates
 parms['MEASURE_LOCAL[Local density]'] = 'n'
@@ -99,15 +100,17 @@ parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
 parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
 # parms['always_measure'] = 'Local density,Local density squared,One body density matrix,Density density'
 parms['init_state'] = 'local_quantumnumbers'
-parms['DT'] = dt
-# parms['TIMESTEPS'] = numsteps
+parms['dt'] = dt
+parms['TIMESTEPS'] = numsteps
 parms['COMPLEX'] = 1
 parms['N_total'] = L
 parms['init_state'] = 'local_quantumnumbers'
 parms['initial_local_N'] = ','.join(['1']*L)
 parms['te_order'] = 'second'
-parms['update_each'] = -1
-parms['chkp_each'] = 1000
+parms['update_each'] = -1#10**8#-1#1
+parms['chkp_each'] = -1#10**8#1000
+# parms['TIMESTEPS'] = int(tf / dt)
+# parms['update_each'] = int(tf / dt)
 
 seed = int(sys.argv[1])
 ximax = float(sys.argv[2])
@@ -132,13 +135,13 @@ basename = 'DynamicsTasks/bhramp.'+str(L)+'.'+str(resi)
 start = datetime.datetime.now()
 
 parms['always_measure'] = 'Local density,Local density squared,One body density matrix,Density density'
-parms['measure_each'] = max(1, numsteps/1000)#1#numsteps/1000#1#numsteps
+parms['measure_each'] = max(1, numsteps/200)#1#numsteps/1000#1#numsteps
 
 taus = np.linspace(1e-7, 2e-7, 2)#[1e-7,1.1e-7,1.2e-7]
 
 # parmslist = []
 parms['tau'] = 1
-parms['TIMESTEPS'] = int(tf / dt)
+# parms['TIMESTEPS'] = int(tf / dt)
 for i in range(L-1):
     parms['t'+str(i)+'[Time]'] = ','.join([mathematica(JW(W)[i]) for W in quench(W_i, W_f, xi, tf, dt)])
 for i in range(L):
@@ -223,7 +226,7 @@ resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
 resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
 resultsstr += 'seed['+str(resi)+']='+str(seed)+';\n'
 resultsstr += 'ximax['+str(resi)+']='+str(ximax)+';\n'
-resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
+resultsstr += 'numsteps['+str(resi)+']='+str(numsteps)+';\n'
 resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
 resultsstr += 'numsteps['+str(resi)+']='+str(numsteps)+';\n'
 resultsstr += 'dt['+str(resi)+']='+mathematica(dt)+';\n'
