@@ -135,7 +135,7 @@ basename = 'DynamicsTasks/bhramp.'+str(L)+'.'+str(resi)
 start = datetime.datetime.now()
 
 parms['always_measure'] = 'Local density,Local density squared,One body density matrix,Density density'
-parms['measure_each'] = max(1, numsteps/200)#1#numsteps/1000#1#numsteps
+parms['measure_each'] = max(1, numsteps/250)#1#numsteps/1000#1#numsteps
 
 taus = np.linspace(1e-7, 2e-7, 2)#[1e-7,1.1e-7,1.2e-7]
 
