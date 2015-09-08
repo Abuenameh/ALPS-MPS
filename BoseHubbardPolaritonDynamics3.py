@@ -71,7 +71,7 @@ def quench(W_i, W_f, xi, tf, dt):
 
 basename = 'Tasks/bh'+str(time.time())
 
-L = 10
+L = 25
 nmax = 5
 # sweeps = 400
 maxstates = 400
