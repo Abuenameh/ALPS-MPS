@@ -24,7 +24,38 @@ def mathematica(x):
             return str(x)
 
 def resifile(i):
-    return 'rampres.' + str(i) + '.txt'
+    return 'quenchres.' + str(i) + '.txt'
+
+speckles = {}
+
+seed = int(sys.argv[1])
+sigma = int(sys.argv[2])
+
+def speckle(W):
+    if speckles.has_key(W):
+        return speckles[W]
+
+    if sigma == 0:
+        speckleW = np.zeros(L)
+        speckleW.fill(W)
+        speckles[W] = speckleW
+        return speckleW
+
+    np.random.seed(seed)
+
+    FFTD = 200
+    FFTL = int(sigma * FFTD)
+
+    A = (4 / np.pi) * (W / FFTD)
+    a = [[A * np.exp(2 * np.pi * np.random.random() * 1j) if (i * i + j * j < 0.25 * FFTD * FFTD) else 0 for i in
+          range(-FFTL // 2, FFTL // 2, 1)] for j in range(-FFTL // 2, FFTL // 2, 1)]
+
+    b = np.fft.fft2(a)
+    s = np.real(b * np.conj(b))
+    s2 = np.sqrt(s)
+    speckleW = s2.flatten()[0:L]
+    speckles[W] = speckleW
+    return speckleW
 
 Na = 1000
 g13 = 2.5e9
@@ -62,8 +93,8 @@ def func(x):
 def Wt(W_i, W_f, t):
     return (W_i - W_f) * func(2 * (1 - 1e6*t) - 0.4) + W_f
 
-def quench(W_i, W_f, xi, tf, dt):
-    return [W_i*xi for i in 1+np.arange(tf / dt)]
+def quench(W_i, tf, dt):
+    return [W_i*np.array([1]*L) for i in 1+np.arange(tf / dt)]
     # return [Wt(W_i, W_f, i*dt)*xi for i in 1+np.arange(tf / dt)]
 
 # print mathematica(quench(7.9e10, 1.1e12, 100, 1e-6/100))
@@ -71,7 +102,7 @@ def quench(W_i, W_f, xi, tf, dt):
 
 basename = 'Tasks/bh'+str(time.time())
 
-L = 25
+L = 20
 nmax = 5
 # sweeps = 400
 maxstates = 400
@@ -112,16 +143,14 @@ parms['chkp_each'] = 10**8#1000
 # parms['TIMESTEPS'] = int(tf / dt)
 # parms['update_each'] = int(tf / dt)
 
-seed = int(sys.argv[1])
-ximax = float(sys.argv[2])
-np.random.seed(seed)
-xi = (1 + ximax * np.random.uniform(-1, 1, L))
+# np.random.seed(seed)
+# xi = (1 + ximax * np.random.uniform(-1, 1, L))
 
 for i in range(L-1):
-    parms['t'+str(i)] = mathematica(JW(W_i*xi)[i])#','.join([mathematica(JW(W_i))])
+    parms['t'+str(i)] = mathematica(JW(speckle(W_i))[i])#','.join([mathematica(JW(W_i))])
     # parms['t'+str(i)+'[Time]'] = ','.join([mathematica(JW(W)) for W in quench(W_i, W_f, numsteps, tf / numsteps)])
 for i in range(L):
-    parms['U'+str(i)] = mathematica(UW(W_i*xi)[i])#','.join([mathematica(UW(W_i))])
+    parms['U'+str(i)] = mathematica(UW(speckle(W_i))[i])#','.join([mathematica(UW(W_i))])
     # parms['U'+str(i)+'[Time]'] = ','.join([mathematica(UW(W)) for W in quench(W_i, W_f, numsteps, tf / numsteps)])
 
 resi = int(sys.argv[3])
@@ -130,12 +159,12 @@ while os.path.exists(resdir + resifile(resi)):
     resi += 1
 
 # resi = 9
-basename = 'DynamicsTasks/bhramp.'+str(L)+'.'+str(resi)
+basename = 'DynamicsTasks/bhquench.'+str(L)+'.'+str(resi)
 
 start = datetime.datetime.now()
 
 parms['always_measure'] = 'Local density,Local density squared,One body density matrix,Density density'
-parms['measure_each'] = max(1, numsteps/250)#1#numsteps/1000#1#numsteps
+parms['measure_each'] = max(1, numsteps/200)#1#numsteps/1000#1#numsteps
 
 taus = np.linspace(1e-7, 2e-7, 2)#[1e-7,1.1e-7,1.2e-7]
 
@@ -143,9 +172,9 @@ taus = np.linspace(1e-7, 2e-7, 2)#[1e-7,1.1e-7,1.2e-7]
 parms['tau'] = 1
 # parms['TIMESTEPS'] = int(tf / dt)
 for i in range(L-1):
-    parms['t'+str(i)+'[Time]'] = ','.join([mathematica(JW(W)[i]) for W in quench(W_i, W_f, xi, tf, dt)])
+    parms['t'+str(i)+'[Time]'] = ','.join([mathematica(JW(W)[i]) for W in quench(W_i, tf, dt)])
 for i in range(L):
-    parms['U'+str(i)+'[Time]'] = ','.join([mathematica(UW(W)[i]) for W in quench(W_i, W_f, xi, tf, dt)])
+    parms['U'+str(i)+'[Time]'] = ','.join([mathematica(UW(W)[i]) for W in quench(W_i, tf, dt)])
 parmslist = [parms]
 # for tau in taus:
 #     parmsi = deepcopy(parms)
@@ -220,18 +249,17 @@ ncorr = [[[(x + 1)*dt, sparse.coo_matrix((y, coords)).toarray()] for (x, y) in z
 #
 # plt.show()
 
-resultsfile = open(os.path.expanduser('~/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Results/rampres.'+str(resi)+'.txt'), 'w')
+resultsfile = open(os.path.expanduser('~/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Results/quenchres.'+str(resi)+'.txt'), 'w')
 resultsstr = ''
 resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
 resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
 resultsstr += 'seed['+str(resi)+']='+str(seed)+';\n'
-resultsstr += 'ximax['+str(resi)+']='+str(ximax)+';\n'
+resultsstr += 'sigma['+str(resi)+']='+str(sigma)+';\n'
 resultsstr += 'numsteps['+str(resi)+']='+str(numsteps)+';\n'
 resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
 resultsstr += 'numsteps['+str(resi)+']='+str(numsteps)+';\n'
 resultsstr += 'dt['+str(resi)+']='+mathematica(dt)+';\n'
 resultsstr += 'tf['+str(resi)+']='+mathematica(tf)+';\n'
-resultsstr += 'xi['+str(resi)+']='+mathematica(xi)+';\n'
 # resultsstr += 'p['+str(resi)+']='+mathematica(p)+';\n'
 resultsstr += 'En['+str(resi)+']='+mathematica(E)+';\n'
 resultsstr += 'n['+str(resi)+']='+mathematica(n)+';\n'
