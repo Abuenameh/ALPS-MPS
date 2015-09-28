@@ -37,11 +37,13 @@ Ng = np.sqrt(Na) * g13
 W_i = 7.9e10
 W_f = 1.1e12
 
+sign = int(sys.argv[5])
+
 def JW(W):
     lenW = len(W)
     J = np.zeros(lenW-1)
     for i in range(0, lenW-1):
-        J[i] = alpha * W[i] * W[i+1] / (np.sqrt(Ng ** 2 + W[i] ** 2) * np.sqrt(Ng ** 2 + W[i+1] ** 2))
+        J[i] = sign*alpha * W[i] * W[i+1] / (np.sqrt(Ng ** 2 + W[i] ** 2) * np.sqrt(Ng ** 2 + W[i+1] ** 2))
     return J
 
 
@@ -172,6 +174,7 @@ resultsstr = ''
 resultsstr += 'L['+str(resi)+']='+str(L)+';\n'
 resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
 resultsstr += 'seed['+str(resi)+']='+str(seed)+';\n'
+resultsstr += 'sign['+str(resi)+']='+str(sign)+';\n'
 resultsstr += 'ximax['+str(resi)+']='+str(ximax)+';\n'
 resultsstr += 'numsteps['+str(resi)+']='+str(numsteps)+';\n'
 resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
