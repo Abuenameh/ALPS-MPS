@@ -53,7 +53,7 @@ def UW(W):
 
 numthreads = 35
 
-L = 25
+L = 100
 nmax = 5
 sweeps = 200
 maxstates = 200
@@ -93,7 +93,7 @@ resdir = os.path.expanduser('~/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Re
 while os.path.exists(resdir + resifile(resi)):
     resi += 1
 
-basename = 'Tasks/bh.' + str(L) + '.' + str(resi) + '.'
+basename = 'Tasks/bhp.' + str(L) + '.' + str(resi) + '.'
 
 def runmps(task, iW, iN, Wi, N):
     parmsi = deepcopy(parms)
@@ -133,9 +133,9 @@ def runmps(task, iW, iN, Wi, N):
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
 def main():
-    Ws = [7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
+    Ws = [1.5e11]#[7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
     nW = len(Ws)
-    Ns = range(0,2*L+1)#range(23,27)
+    Ns = range(90,120)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
     nN = len(Ns)
     WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
     ntasks = len(WNs)
@@ -148,6 +148,7 @@ def main():
         futures = [executor.submit(runmps, task, iW, iN, Wi, N) for (task, [iW, iN], [Wi, N]) in WNs]
         for future in pbar(concurrent.futures.as_completed(futures)):
             future.result()
+            sys.stderr.flush()
 
     end = datetime.datetime.now()
 
