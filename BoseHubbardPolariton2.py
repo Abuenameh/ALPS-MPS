@@ -114,12 +114,14 @@ def runmps(task, iW, iN, Wi, N):
         if ximax == 0:
             raise ValueError
         ns = VarArray(L, nmax)
-        E = Sum([n*(n-1) for n in ns], U.tolist())
+        E = Sum([n*(n-1) for n in ns], (0.5*U).tolist())
         model = Model(Minimize(E), [Sum(ns) == N])
         solver = model.load('SCIP')
-        solver.setTimeLimit(600)
+        solver.setTimeLimit(60)
         solved = solver.solve()
         parmsi['solved'] = solved
+        # print >>sys.stderr, str(ns)
+        # print >>sys.stderr, np.sum(np.multiply([0.5*int(str(n))*(int(str(n))-1) for n in ns], U))
     except:
         basen = N // L
         ns = [basen] * L
@@ -127,6 +129,14 @@ def runmps(task, iW, iN, Wi, N):
         excessi = [i for (xii, i) in xisort[:rem]]
         for i in excessi:
             ns[i] += 1
+    # basen = N // L
+    # ns2 = [basen] * L
+    # rem = N % L
+    # excessi = [i for (xii, i) in xisort[:rem]]
+    # for i in excessi:
+    #     ns2[i] += 1
+    # print >>sys.stderr, str(ns2)
+    # print >>sys.stderr, np.sum(np.multiply([n*(n-1) for n in ns2], U))
     parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
 
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
@@ -168,8 +178,10 @@ def main():
             solved[iW][iN] = s.props['solved']
             if(s.props['observable'] == 'Energy'):
                 Es[iW][iN] = s.y[0]
+                # print >>sys.stderr, Es[iW][iN]
             if(s.props['observable'] == 'Local density'):
                 ns[iW][iN] = s.y[0]
+                # print >>sys.stderr, ns[iW][iN]
             if(s.props['observable'] == 'Local density squared'):
                 n2s[iW][iN] = s.y[0]
             if(s.props['observable'] == 'One body density matrix'):
