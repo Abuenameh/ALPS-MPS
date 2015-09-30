@@ -53,15 +53,16 @@ def UW(W):
 
 numthreads = 35
 
-L = 100
+L = 50
 nmax = 5
 sweeps = 200
 maxstates = 200
 
 #prepare the input parameters
 parms = OrderedDict()
-parms['LATTICE_LIBRARY'] = 'lattice' + str(L) + '.xml'
-parms['LATTICE'] = 'inhomogeneous open chain lattice'
+# parms['LATTICE_LIBRARY'] = 'lattice' + str(L) + '.xml'
+# parms['LATTICE'] = 'inhomogeneous open chain lattice'
+parms['LATTICE'] = 'open chain lattice'
 parms['MODEL_LIBRARY'] = 'model.xml'
 parms['MODEL'] = 'boson Hubbard'
 parms['L'] = L
@@ -74,8 +75,14 @@ parms['MEASURE_LOCAL[Local density]'] = 'n'
 parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
 parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
 parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
-parms['init_state'] = 'local_quantumnumbers'
+# parms['init_state'] = 'local_quantumnumbers'
 parms['chkp_each'] = sweeps
+parms['optimization'] = 'singlesite'
+# parms['ngrowsweeps'] = 4
+# parms['nmainsweeps'] = 4
+# parms['alpha_initial'] = 1e-0
+# parms['alpha_main'] = 1e-2
+# parms['alpha_final'] = 1e-4
 
 bounds = tuple([(0, nmax)] * L)
 
@@ -110,25 +117,25 @@ def runmps(task, iW, iN, Wi, N):
 
     parmsi['N_total'] = N
 
-    try:
-        if ximax == 0:
-            raise ValueError
-        ns = VarArray(L, nmax)
-        E = Sum([n*(n-1) for n in ns], (0.5*U).tolist())
-        model = Model(Minimize(E), [Sum(ns) == N])
-        solver = model.load('SCIP')
-        solver.setTimeLimit(60)
-        solved = solver.solve()
-        parmsi['solved'] = solved
-        # print >>sys.stderr, str(ns)
-        # print >>sys.stderr, np.sum(np.multiply([0.5*int(str(n))*(int(str(n))-1) for n in ns], U))
-    except:
-        basen = N // L
-        ns = [basen] * L
-        rem = N % L
-        excessi = [i for (xii, i) in xisort[:rem]]
-        for i in excessi:
-            ns[i] += 1
+    # try:
+    #     if ximax == 0:
+    #         raise ValueError
+    #     ns = VarArray(L, nmax)
+    #     E = Sum([n*(n-1) for n in ns], (0.5*U).tolist())
+    #     model = Model(Minimize(E), [Sum(ns) == N])
+    #     solver = model.load('SCIP')
+    #     solver.setTimeLimit(60)
+    #     solved = solver.solve()
+    #     parmsi['solved'] = solved
+    #     # print >>sys.stderr, str(ns)
+    #     # print >>sys.stderr, np.sum(np.multiply([0.5*int(str(n))*(int(str(n))-1) for n in ns], U))
+    # except:
+    #     basen = N // L
+    #     ns = [basen] * L
+    #     rem = N % L
+    #     excessi = [i for (xii, i) in xisort[:rem]]
+    #     for i in excessi:
+    #         ns[i] += 1
     # basen = N // L
     # ns2 = [basen] * L
     # rem = N % L
@@ -137,7 +144,7 @@ def runmps(task, iW, iN, Wi, N):
     #     ns2[i] += 1
     # print >>sys.stderr, str(ns2)
     # print >>sys.stderr, np.sum(np.multiply([n*(n-1) for n in ns2], U))
-    parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
+    # parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
 
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
@@ -145,7 +152,7 @@ def runmps(task, iW, iN, Wi, N):
 def main():
     Ws = [1.5e11]#[7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
     nW = len(Ws)
-    Ns = range(90,120)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
+    Ns = range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
     nN = len(Ns)
     WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
     ntasks = len(WNs)
@@ -175,7 +182,7 @@ def main():
         for s in d:
             iW = int(s.props['iW'])
             iN = int(s.props['iN'])
-            solved[iW][iN] = s.props['solved']
+            # solved[iW][iN] = s.props['solved']
             if(s.props['observable'] == 'Energy'):
                 Es[iW][iN] = s.y[0]
                 # print >>sys.stderr, Es[iW][iN]
