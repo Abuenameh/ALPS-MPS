@@ -14,7 +14,7 @@ maxstates = 200
 #prepare the input parameters
 parms = OrderedDict()
 parms['LATTICE'] = 'open chain lattice'
-parms['LATTICE'] = 'inhomogeneous chain lattice'
+# parms['LATTICE'] = 'inhomogeneous chain lattice'
 parms['MODEL'] = 'boson Hubbard'
 # parms['MODEL'] = 'fermion Hubbard'
 # parms['MODEL'] = 'hardcore boson'
@@ -38,6 +38,7 @@ parms['optimization'] = 'singlesite'
 # parms['alpha_initial'] = 1e-0
 # parms['alpha_main'] = 1e-2
 # parms['alpha_final'] = 1e-4
+# parms['storagedir'] = 'SingleSite/storage'
 
 parms['t'] = 0.1
 parms['U'] = 1
