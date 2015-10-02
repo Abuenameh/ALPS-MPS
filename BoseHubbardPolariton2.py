@@ -95,8 +95,8 @@ xisort = sorted([(xii, i) for (i, xii) in enumerate(xi)])
 
 resi = int(sys.argv[3])
 resdir = os.path.expanduser('~/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Results/')
-# while os.path.exists(resdir + resifile(resi)):
-#     resi += 1
+while os.path.exists(resdir + resifile(resi)):
+    resi += 1
 
 basename = 'Tasks/bhp.' + str(L) + '.' + str(resi) + '.'
 
@@ -140,7 +140,7 @@ def runmps(task, iW, iN, Wi, N):
 def main():
     Ws = [7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
     nW = len(Ws)
-    Ns = [L]#range(0,2*L+1)#range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
+    Ns = range(30,86)#[L]#range(0,2*L+1)#range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
     nN = len(Ns)
     WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
     ntasks = len(WNs)
