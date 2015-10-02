@@ -76,15 +76,11 @@ parms['MEASURE_LOCAL[Local density]'] = 'n'
 parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
 parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
 parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
-# parms['init_state'] = 'local_quantumnumbers'
+parms['MEASURE[Entropy]'] = 1
+parms['MEASURE[Renyi2]'] = 1
+parms['entanglement_spectra'] = ','.join([str(i) for i in np.arange(0,L)])
+parms['init_state'] = 'local_quantumnumbers'
 parms['chkp_each'] = sweeps
-# parms['optimization'] = 'singlesite'
-# parms['optimization'] = 'twosite'
-# parms['ngrowsweeps'] = 4
-# parms['nmainsweeps'] = 4
-# parms['alpha_initial'] = 1e-0
-# parms['alpha_main'] = 1e-2
-# parms['alpha_final'] = 1e-4
 
 bounds = tuple([(0, nmax)] * L)
 
@@ -99,8 +95,8 @@ xisort = sorted([(xii, i) for (i, xii) in enumerate(xi)])
 
 resi = int(sys.argv[3])
 resdir = os.path.expanduser('~/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Results/')
-while os.path.exists(resdir + resifile(resi)):
-    resi += 1
+# while os.path.exists(resdir + resifile(resi)):
+#     resi += 1
 
 basename = 'Tasks/bhp.' + str(L) + '.' + str(resi) + '.'
 
@@ -112,8 +108,6 @@ def runmps(task, iW, iN, Wi, N):
     W = Wi * xi
     t = JW(W)
     U = UW(W)
-    # parmsi['t'] = 0.01
-    # parmsi['U'] = 1
     for i in range(L):
         parmsi['t'+str(i)] = t[i]
     for i in range(L):
@@ -121,34 +115,24 @@ def runmps(task, iW, iN, Wi, N):
 
     parmsi['N_total'] = N
 
-    # try:
-    #     if ximax == 0:
-    #         raise ValueError
-    #     ns = VarArray(L, nmax)
-    #     E = Sum([n*(n-1) for n in ns], (0.5*U).tolist())
-    #     model = Model(Minimize(E), [Sum(ns) == N])
-    #     solver = model.load('SCIP')
-    #     solver.setTimeLimit(60)
-    #     solved = solver.solve()
-    #     parmsi['solved'] = solved
-    #     # print >>sys.stderr, str(ns)
-    #     # print >>sys.stderr, np.sum(np.multiply([0.5*int(str(n))*(int(str(n))-1) for n in ns], U))
-    # except:
-    #     basen = N // L
-    #     ns = [basen] * L
-    #     rem = N % L
-    #     excessi = [i for (xii, i) in xisort[:rem]]
-    #     for i in excessi:
-    #         ns[i] += 1
-    # basen = N // L
-    # ns = [basen] * L
-    # rem = N % L
-    # excessi = [i for (xii, i) in xisort[:rem]]
-    # for i in excessi:
-    #     ns[i] += 1
-    # # print >>sys.stderr, str(ns2)
-    # # print >>sys.stderr, np.sum(np.multiply([n*(n-1) for n in ns2], U))
-    # parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
+    try:
+        if ximax == 0:
+            raise ValueError
+        ns = VarArray(L, nmax)
+        E = Sum([n*(n-1) for n in ns], (0.5*U).tolist())
+        model = Model(Minimize(E), [Sum(ns) == N])
+        solver = model.load('SCIP')
+        solver.setTimeLimit(60)
+        solved = solver.solve()
+        parmsi['solved'] = solved
+    except:
+        basen = N // L
+        ns = [basen] * L
+        rem = N % L
+        excessi = [i for (xii, i) in xisort[:rem]]
+        for i in excessi:
+            ns[i] += 1
+    parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
 
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
@@ -156,7 +140,7 @@ def runmps(task, iW, iN, Wi, N):
 def main():
     Ws = [7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
     nW = len(Ws)
-    Ns = range(0,2*L+1)#range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
+    Ns = [L]#range(0,2*L+1)#range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
     nN = len(Ns)
     WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
     ntasks = len(WNs)
@@ -182,6 +166,8 @@ def main():
     n2s = makeres(nW, nN)
     corrs = makeres(nW, nN)
     ncorrs = makeres(nW, nN)
+    entropy = makeres(nW, nN)
+    es = makeres(nW, nN)
     for d in data:
         for s in d:
             iW = int(s.props['iW'])
@@ -189,16 +175,18 @@ def main():
             # solved[iW][iN] = s.props['solved']
             if(s.props['observable'] == 'Energy'):
                 Es[iW][iN] = s.y[0]
-                # print >>sys.stderr, Es[iW][iN]
             if(s.props['observable'] == 'Local density'):
                 ns[iW][iN] = s.y[0]
-                # print >>sys.stderr, ns[iW][iN]
             if(s.props['observable'] == 'Local density squared'):
                 n2s[iW][iN] = s.y[0]
             if(s.props['observable'] == 'One body density matrix'):
                 corrs[iW][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
             if(s.props['observable'] == 'Density density'):
                 ncorrs[iW][iN] = sparse.coo_matrix((s.y[0], (s.x[:,0], s.x[:,1]))).toarray()
+            if(s.props['observable'] == 'Entropy'):
+                entropy[iW][iN] = s.y[0]
+            if(s.props['observable'] == 'Entanglement Spectra'):
+                es[iW][iN] = [[s for s in reversed(sorted(esi[1]))][0:4] for esi in s.y[0]]
 
     resultsfile = open(resdir + resifile(resi), 'w')
     resultsstr = ''
@@ -218,6 +206,8 @@ def main():
     resultsstr += 'n2res['+str(resi)+']='+mathematica(n2s)+';\n'
     resultsstr += 'corrres['+str(resi)+']='+mathematica(corrs)+';\n'
     resultsstr += 'ncorrres['+str(resi)+']='+mathematica(ncorrs)+';\n'
+    resultsstr += 'entropy['+str(resi)+']='+mathematica(entropy)+';\n'
+    resultsstr += 'es['+str(resi)+']='+mathematica(es)+';\n'
     resultsstr += 'runtime['+str(resi)+']="'+str(end-start)+'";\n'
     resultsfile.write(resultsstr)
 
