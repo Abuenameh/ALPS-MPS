@@ -51,19 +51,19 @@ def JWi(W):
 def UW(W):
     return -2*(g24 ** 2) / Delta * (Ng ** 2 * W ** 2) / ((Ng ** 2 + W ** 2) ** 2)
 
-numthreads = 35
+numthreads = 4
 
 L = 50
 nmax = 5
-sweeps = 20
+sweeps = 10
 maxstates = 200
 
 #prepare the input parameters
 parms = OrderedDict()
-# parms['LATTICE_LIBRARY'] = 'lattice' + str(L) + '.xml'
-# parms['LATTICE'] = 'inhomogeneous open chain lattice'
-parms['LATTICE'] = 'open chain lattice'
-# parms['MODEL_LIBRARY'] = 'model.xml'
+parms['LATTICE_LIBRARY'] = 'lattice' + str(L) + '.xml'
+parms['LATTICE'] = 'inhomogeneous open chain lattice'
+# parms['LATTICE'] = 'open chain lattice'
+parms['MODEL_LIBRARY'] = 'model.xml'
 parms['MODEL'] = 'boson Hubbard'
 parms['L'] = L
 parms['CONSERVED_QUANTUMNUMBERS'] = 'N'
@@ -75,9 +75,9 @@ parms['MEASURE_LOCAL[Local density]'] = 'n'
 parms['MEASURE_LOCAL[Local density squared]'] = 'n2'
 parms['MEASURE_CORRELATIONS[One body density matrix]'] = 'bdag:b'
 parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
-parms['init_state'] = 'local_quantumnumbers'
+# parms['init_state'] = 'local_quantumnumbers'
 parms['chkp_each'] = sweeps
-parms['optimization'] = 'singlesite'
+# parms['optimization'] = 'singlesite'
 # parms['optimization'] = 'twosite'
 # parms['ngrowsweeps'] = 4
 # parms['nmainsweeps'] = 4
@@ -111,14 +111,12 @@ def runmps(task, iW, iN, Wi, N):
     W = Wi * xi
     t = JW(W)
     U = UW(W)
-    parmsi['t'] = 1#0.01
-    parmsi['U'] = 1
-    # parmsi['V'] = 1
-    # parmsi['mu'] = 0.5
-    # for i in range(L):
-    #     parmsi['t'+str(i)] = 0.01#t[i]
-    # for i in range(L):
-    #     parmsi['U'+str(i)] = 1#U[i]
+    # parmsi['t'] = 0.01
+    # parmsi['U'] = 1
+    for i in range(L):
+        parmsi['t'+str(i)] = t[i]
+    for i in range(L):
+        parmsi['U'+str(i)] = U[i]
 
     parmsi['N_total'] = N
 
@@ -141,15 +139,15 @@ def runmps(task, iW, iN, Wi, N):
     #     excessi = [i for (xii, i) in xisort[:rem]]
     #     for i in excessi:
     #         ns[i] += 1
-    basen = N // L
-    ns = [basen] * L
-    rem = N % L
-    excessi = [i for (xii, i) in xisort[:rem]]
-    for i in excessi:
-        ns[i] += 1
-    # print >>sys.stderr, str(ns2)
-    # print >>sys.stderr, np.sum(np.multiply([n*(n-1) for n in ns2], U))
-    parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
+    # basen = N // L
+    # ns = [basen] * L
+    # rem = N % L
+    # excessi = [i for (xii, i) in xisort[:rem]]
+    # for i in excessi:
+    #     ns[i] += 1
+    # # print >>sys.stderr, str(ns2)
+    # # print >>sys.stderr, np.sum(np.multiply([n*(n-1) for n in ns2], U))
+    # parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
 
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
@@ -157,7 +155,7 @@ def runmps(task, iW, iN, Wi, N):
 def main():
     Ws = [1.5e11]#[7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
     nW = len(Ws)
-    Ns = [40]#range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
+    Ns = range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
     nN = len(Ns)
     WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
     ntasks = len(WNs)
