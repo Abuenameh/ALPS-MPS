@@ -51,15 +51,16 @@ def JWi(W):
 def UW(W):
     return -2*(g24 ** 2) / Delta * (Ng ** 2 * W ** 2) / ((Ng ** 2 + W ** 2) ** 2)
 
-numthreads = 4
+numthreads = 35
 
 L = 50
 nmax = 5
-sweeps = 10
+sweeps = 50
 maxstates = 200
 
 #prepare the input parameters
 parms = OrderedDict()
+# parms['SEED'] = np.random.rand()
 parms['LATTICE_LIBRARY'] = 'lattice' + str(L) + '.xml'
 parms['LATTICE'] = 'inhomogeneous open chain lattice'
 # parms['LATTICE'] = 'open chain lattice'
@@ -153,9 +154,9 @@ def runmps(task, iW, iN, Wi, N):
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
 def main():
-    Ws = [1.5e11]#[7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
+    Ws = [7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
     nW = len(Ws)
-    Ns = range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
+    Ns = range(0,2*L+1)#range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
     nN = len(Ns)
     WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
     ntasks = len(WNs)
