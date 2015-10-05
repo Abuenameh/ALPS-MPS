@@ -10,6 +10,7 @@ import sys
 import os
 import progressbar
 import concurrent.futures
+import shutil
 from Numberjack import VarArray, Model, Sum, Minimize
 
 def mathematica(x):
@@ -53,7 +54,7 @@ def UW(W):
 
 numthreads = 35
 
-L = 50
+L = 25
 nmax = 5
 sweeps = 50
 maxstates = 200
@@ -79,7 +80,7 @@ parms['MEASURE_CORRELATIONS[Density density]'] = 'n:n'
 parms['MEASURE[Entropy]'] = 1
 parms['MEASURE[Renyi2]'] = 1
 parms['entanglement_spectra'] = ','.join([str(i) for i in np.arange(0,L)])
-parms['init_state'] = 'local_quantumnumbers'
+# parms['init_state'] = 'local_quantumnumbers'
 parms['chkp_each'] = sweeps
 
 bounds = tuple([(0, nmax)] * L)
@@ -98,6 +99,12 @@ resdir = os.path.expanduser('~/Dropbox/Amazon EC2/Simulation Results/ALPS-MPS/Re
 while os.path.exists(resdir + resifile(resi)):
     resi += 1
 
+try:
+    shutil.rmtree('Tasks')
+    os.mkdir('Tasks')
+except:
+    pass
+
 basename = 'Tasks/bhp.' + str(L) + '.' + str(resi) + '.'
 
 def runmps(task, iW, iN, Wi, N):
@@ -115,32 +122,32 @@ def runmps(task, iW, iN, Wi, N):
 
     parmsi['N_total'] = N
 
-    try:
-        if ximax == 0:
-            raise ValueError
-        ns = VarArray(L, nmax)
-        E = Sum([n*(n-1) for n in ns], (0.5*U).tolist())
-        model = Model(Minimize(E), [Sum(ns) == N])
-        solver = model.load('SCIP')
-        solver.setTimeLimit(60)
-        solved = solver.solve()
-        parmsi['solved'] = solved
-    except:
-        basen = N // L
-        ns = [basen] * L
-        rem = N % L
-        excessi = [i for (xii, i) in xisort[:rem]]
-        for i in excessi:
-            ns[i] += 1
-    parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
+    # try:
+    #     if ximax == 0:
+    #         raise ValueError
+    #     ns = VarArray(L, nmax)
+    #     E = Sum([n*(n-1) for n in ns], (0.5*U).tolist())
+    #     model = Model(Minimize(E), [Sum(ns) == N])
+    #     solver = model.load('SCIP')
+    #     solver.setTimeLimit(60)
+    #     solved = solver.solve()
+    #     parmsi['solved'] = solved
+    # except:
+    #     basen = N // L
+    #     ns = [basen] * L
+    #     rem = N % L
+    #     excessi = [i for (xii, i) in xisort[:rem]]
+    #     for i in excessi:
+    #         ns[i] += 1
+    # parmsi['initial_local_N'] = ','.join([str(n) for n in ns])
 
     input_file = pyalps.writeInputFiles(basename + str(task), [parmsi])
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
 def main():
-    Ws = [7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
+    Ws = [1e11]#s[7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
     nW = len(Ws)
-    Ns = range(30,86)#[L]#range(0,2*L+1)#range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
+    Ns = range(0,2*L+1)#range(30,86)#[L]#range(0,2*L+1)#range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
     nN = len(Ns)
     WNs = zip(range(nW*nN), [[i, j] for i in range(nW) for j in range(nN)], [[Wi, Ni] for Wi in Ws for Ni in Ns])
     ntasks = len(WNs)
@@ -195,6 +202,7 @@ def main():
     resultsstr += 'nmax['+str(resi)+']='+str(nmax)+';\n'
     resultsstr += 'sweeps['+str(resi)+']='+str(sweeps)+';\n'
     resultsstr += 'maxstates['+str(resi)+']='+str(maxstates)+';\n'
+    resultsstr += 'ximax['+str(resi)+']='+str(ximax)+';\n'
     resultsstr += 'xi['+str(resi)+']='+mathematica(xi)+';\n'
     resultsstr += 'Ws['+str(resi)+']='+mathematica(Ws)+';\n'
     resultsstr += 'ts['+str(resi)+']='+mathematica([JWi(Wi) for Wi in Ws])+';\n'
