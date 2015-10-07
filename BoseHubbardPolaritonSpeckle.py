@@ -82,7 +82,7 @@ def JWi(W):
 def UW(W):
     return -2*(g24 ** 2) / Delta * (Ng ** 2 * W ** 2) / ((Ng ** 2 + W ** 2) ** 2)
 
-numthreads = 4
+numthreads = 35
 
 L = 25
 nmax = 5
@@ -173,11 +173,11 @@ def runmps(task, iW, isigma, Wi, sigma):
     pyalps.runApplication('mps_optim', input_file, writexml=True)
 
 def main():
-    Ws = np.linspace(7.9e10, 1.1e12, 10)#[1e11]#[7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
+    Ws = np.linspace(7.9e10, 1.1e12, 17)#[1e11]#[7.9e10]#np.linspace(2e11,3.2e11,10)#[2e10]
     nW = len(Ws)
     # Ns = [L]#range(0,2*L+1)#range(30,86)#[L]#range(0,2*L+1)#range(40,70)#range(0,2*L+1)#range(24,2*L+1)#range(0,2*L+1)#range(23,27)
     # nN = len(Ns)
-    sigmas = [1,2]#range(0, 11)
+    sigmas = [0,2,5,10]#range(0, 11)
     nsigma = len(sigmas)
     Wsigmas = zip(range(nW*nsigma), [[i, j] for i in range(nW) for j in range(nsigma)], [[Wi, sigmai] for Wi in Ws for sigmai in sigmas])
     ntasks = len(Wsigmas)
